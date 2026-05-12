@@ -656,6 +656,264 @@ async function toPdf(){
   await saveBlob(blob,'Besucher-Budget_'+S.year+'_'+S.sc+'.pdf','PDF-Datei','application/pdf',['.pdf']);
 }
 
+/* ============================================================
+   PERSONALEINSATZPLANUNG (Staff Scheduling)
+   ============================================================ */
+
+var STAFF_CATS = [
+  { id: 'ops', label: 'Operations',    color: '#3f51b5', hourlyRate: 15.00, active: true, rows: [] },
+  { id: 'fb',  label: 'F&B',           color: '#f59e0b', hourlyRate: 13.00, active: true, rows: [] },
+  { id: 'ret', label: 'Retail',        color: '#10b981', hourlyRate: 13.50, active: true, rows: [] },
+  { id: 'ent', label: 'Entertainment', color: '#8b5cf6', hourlyRate: 16.00, active: true, rows: [] }
+];
+
+var STAFF_PARAMS = { sv: 20, puffer: 10 };
+var STAFF_MAX_ROWS = 60;
+
+function staffTimeDiff(open, close) {
+  if (!open || !close) return 0;
+  var op = open.split(':').map(Number);
+  var cl = close.split(':').map(Number);
+  var openM = op[0] * 60 + (op[1] || 0);
+  var closeM = cl[0] * 60 + (cl[1] || 0);
+  if (closeM <= openM) closeM += 1440;
+  return (closeM - openM) / 60;
+}
+
+function staffRowCalc(row, cat) {
+  var dur = staffTimeDiff(row.open, row.close);
+  var lohnProMA = dur * cat.hourlyRate;
+  var tageskosten = lohnProMA * (row.headcount || 0);
+  return { dur: dur, lohnProMA: lohnProMA, tageskosten: tageskosten };
+}
+
+function staffDailyBase() {
+  var total = 0;
+  STAFF_CATS.forEach(function(cat) {
+    if (!cat.active) return;
+    cat.rows.forEach(function(row) { total += staffRowCalc(row, cat).tageskosten; });
+  });
+  return total;
+}
+
+function fmtH(h) {
+  return h.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' h';
+}
+
+function escHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function staffNewRow() {
+  return { name: '', open: '09:00', close: '17:00', headcount: 1 };
+}
+
+function renderStaffSummary() {
+  var el = document.getElementById('staffSummarySection');
+  if (!el) return;
+  var basis = staffDailyBase();
+  var sv = basis * STAFF_PARAMS.sv / 100;
+  var withSv = basis + sv;
+  var puff = withSv * STAFF_PARAMS.puffer / 100;
+  var total = withSv + puff;
+
+  function sumRow(label, val, cls) {
+    return '<div class="staff-sum-row' + (cls ? ' staff-sum-' + cls : '') + '">'
+      + '<span class="staff-sum-label">' + label + '</span>'
+      + '<span class="staff-sum-value">' + fmtEUR(val) + '</span></div>';
+  }
+
+  el.innerHTML = '<div class="staff-summary-grid">'
+    + sumRow('Basis Tageskosten (Netto)', basis, '')
+    + sumRow('SV-Zuschlag (' + STAFF_PARAMS.sv.toLocaleString('de-DE') + ' %)', sv, 'add')
+    + sumRow('Puffer (' + STAFF_PARAMS.puffer.toLocaleString('de-DE') + ' %)', puff, 'add')
+    + sumRow('Tageskosten Gesamt', total, 'total')
+    + sumRow('Wochenkosten Gesamt (\xd7 7)', total * 7, 'total')
+    + sumRow('Monatskosten Gesamt (\xd7 30)', total * 30, 'total')
+    + '</div>';
+}
+
+function renderStaffCatPanel(cat) {
+  var panel = document.getElementById('staff-panel-' + cat.id);
+  if (!panel) return;
+  var wrap = panel.querySelector('.staff-table-wrap');
+
+  if (!cat.active) {
+    wrap.innerHTML = '<div class="staff-inactive-msg">Kategorie deaktiviert</div>';
+    return;
+  }
+
+  var html = '<table class="staff-table"><thead><tr>'
+    + '<th>Name / Einheit</th><th>\xd6ffnung</th><th>Schlie\xdfung</th>'
+    + '<th>Dauer</th><th>Headcount</th><th>Stundenlohn (Netto)</th><th>Tageskosten</th><th></th>'
+    + '</tr></thead><tbody>';
+
+  cat.rows.forEach(function(row, i) {
+    var c = staffRowCalc(row, cat);
+    html += '<tr data-cat="' + cat.id + '" data-idx="' + i + '">'
+      + '<td><input class="staff-inp staff-name" type="text" value="' + escHtml(row.name) + '" placeholder="z. B. Haupteingang" /></td>'
+      + '<td><input class="staff-inp staff-open" type="time" value="' + escHtml(row.open) + '" /></td>'
+      + '<td><input class="staff-inp staff-close" type="time" value="' + escHtml(row.close) + '" /></td>'
+      + '<td class="staff-calc">' + fmtH(c.dur) + '</td>'
+      + '<td><input class="staff-inp staff-hc" type="number" value="' + (row.headcount || 0) + '" min="0" max="999" step="1" /></td>'
+      + '<td class="staff-calc">' + fmtEUR(c.lohnProMA) + '</td>'
+      + '<td class="staff-calc staff-tageskosten">' + fmtEUR(c.tageskosten) + '</td>'
+      + '<td class="staff-actions">'
+        + '<button class="staff-btn-dup" title="Duplizieren">⧉</button>'
+        + '<button class="staff-btn-del" title="L\xf6schen">✕</button>'
+      + '</td></tr>';
+  });
+
+  var catTotal = cat.rows.reduce(function(s,r){return s+staffRowCalc(r,cat).tageskosten;},0);
+  html += '</tbody><tfoot><tr>'
+    + '<td colspan="6" class="staff-foot-label">Kategorie Gesamt:</td>'
+    + '<td class="staff-calc staff-foot-total">' + fmtEUR(catTotal) + '</td>'
+    + '<td></td></tr></tfoot></table>';
+
+  wrap.innerHTML = html;
+
+  wrap.querySelectorAll('tr[data-idx]').forEach(function(tr) {
+    var idx = parseInt(tr.dataset.idx, 10);
+    var row = cat.rows[idx];
+
+    tr.querySelector('.staff-name').addEventListener('input', function(e) {
+      row.name = e.target.value; saveStaffState();
+    });
+    tr.querySelector('.staff-open').addEventListener('change', function(e) {
+      row.open = e.target.value; staffRefreshRow(tr, cat, idx);
+    });
+    tr.querySelector('.staff-close').addEventListener('change', function(e) {
+      row.close = e.target.value; staffRefreshRow(tr, cat, idx);
+    });
+    tr.querySelector('.staff-hc').addEventListener('input', function(e) {
+      row.headcount = parseInt(e.target.value, 10) || 0; staffRefreshRow(tr, cat, idx);
+    });
+    tr.querySelector('.staff-btn-dup').addEventListener('click', function() {
+      if (cat.rows.length >= STAFF_MAX_ROWS) {
+        alert('Maximale Zeilenanzahl (' + STAFF_MAX_ROWS + ') erreicht.');
+        return;
+      }
+      cat.rows.splice(idx + 1, 0, JSON.parse(JSON.stringify(row)));
+      renderStaffCatPanel(cat); renderStaffSummary(); saveStaffState();
+    });
+    tr.querySelector('.staff-btn-del').addEventListener('click', function() {
+      cat.rows.splice(idx, 1);
+      renderStaffCatPanel(cat); renderStaffSummary(); saveStaffState();
+    });
+  });
+}
+
+function staffRefreshRow(tr, cat, idx) {
+  var c = staffRowCalc(cat.rows[idx], cat);
+  var calcs = tr.querySelectorAll('.staff-calc');
+  calcs[0].textContent = fmtH(c.dur);
+  calcs[1].textContent = fmtEUR(c.lohnProMA);
+  calcs[2].textContent = fmtEUR(c.tageskosten);
+  var wrap = tr.closest('.staff-table-wrap');
+  if (wrap) {
+    var ft = wrap.querySelector('.staff-foot-total');
+    if (ft) ft.textContent = fmtEUR(cat.rows.reduce(function(s,r){return s+staffRowCalc(r,cat).tageskosten;},0));
+  }
+  renderStaffSummary();
+  saveStaffState();
+}
+
+/* Persistence */
+var STAFF_LS_KEY = 'vb:staff:v1';
+function saveStaffState() {
+  try {
+    localStorage.setItem(STAFF_LS_KEY, JSON.stringify({
+      sv: STAFF_PARAMS.sv, puffer: STAFF_PARAMS.puffer,
+      cats: STAFF_CATS.map(function(c){return{id:c.id,active:c.active,hourlyRate:c.hourlyRate,rows:c.rows.slice()};})
+    }));
+  } catch(e) {}
+}
+function loadStaffState() {
+  try {
+    var raw = localStorage.getItem(STAFF_LS_KEY); if (!raw) return;
+    var d = JSON.parse(raw);
+    if (d.sv !== undefined) STAFF_PARAMS.sv = d.sv;
+    if (d.puffer !== undefined) STAFF_PARAMS.puffer = d.puffer;
+    if (Array.isArray(d.cats)) d.cats.forEach(function(sc) {
+      var cat = STAFF_CATS.find(function(c){return c.id===sc.id;});
+      if (!cat) return;
+      if (sc.active !== undefined) cat.active = sc.active;
+      if (sc.hourlyRate !== undefined) cat.hourlyRate = sc.hourlyRate;
+      if (Array.isArray(sc.rows)) cat.rows = sc.rows;
+    });
+  } catch(e) {}
+}
+
+function initStaffSection() {
+  loadStaffState();
+
+  /* SV + Puffer */
+  var svEl = document.getElementById('staffSV');
+  var pufferEl = document.getElementById('staffPuffer');
+  if (svEl) { svEl.value = STAFF_PARAMS.sv; svEl.addEventListener('input', function(e){STAFF_PARAMS.sv=parseFloat(e.target.value)||0;renderStaffSummary();saveStaffState();}); }
+  if (pufferEl) { pufferEl.value = STAFF_PARAMS.puffer; pufferEl.addEventListener('input', function(e){STAFF_PARAMS.puffer=parseFloat(e.target.value)||0;renderStaffSummary();saveStaffState();}); }
+
+  /* Per-category settings */
+  var catSettings = document.getElementById('staffCatSettings');
+  STAFF_CATS.forEach(function(cat) {
+    var div = document.createElement('div');
+    div.className = 'staff-cat-setting';
+    div.innerHTML = '<label class="staff-cat-toggle">'
+      + '<input type="checkbox" id="staffActive-' + cat.id + '"' + (cat.active ? ' checked' : '') + ' />'
+      + '<span style="border-left:3px solid ' + cat.color + ';padding-left:5px">' + cat.label + '</span>'
+      + '</label>'
+      + '<div class="staff-rate-field">'
+      + '<label for="staffRate-' + cat.id + '">\xd8 Stundenlohn</label>'
+      + '<div class="staff-rate-wrap"><input type="number" id="staffRate-' + cat.id + '" value="' + cat.hourlyRate.toFixed(2) + '" min="0" step="0.5" /><span>€</span></div>'
+      + '</div>';
+    catSettings.appendChild(div);
+
+    document.getElementById('staffActive-' + cat.id).addEventListener('change', function(e) {
+      cat.active = e.target.checked; renderStaffCatPanel(cat); renderStaffSummary(); saveStaffState();
+    });
+    document.getElementById('staffRate-' + cat.id).addEventListener('input', function(e) {
+      cat.hourlyRate = parseFloat(e.target.value) || 0; renderStaffCatPanel(cat); renderStaffSummary(); saveStaffState();
+    });
+  });
+
+  /* Category panels */
+  var catPanels = document.getElementById('staffCatPanels');
+  STAFF_CATS.forEach(function(cat) {
+    /* Add one default row if nothing was loaded */
+    if (!cat.rows.length) cat.rows.push(staffNewRow());
+
+    var panel = document.createElement('div');
+    panel.className = 'staff-panel';
+    panel.id = 'staff-panel-' + cat.id;
+    panel.style.borderLeftColor = cat.color;
+    panel.innerHTML = '<div class="staff-panel-header">'
+      + '<div class="staff-panel-title" style="color:' + cat.color + '">' + cat.label + '</div>'
+      + '<button type="button" class="staff-btn-add" id="staffAdd-' + cat.id + '">+ Zeile hinzuf\xfcgen</button>'
+      + '</div><div class="staff-table-wrap"></div>';
+    catPanels.appendChild(panel);
+
+    document.getElementById('staffAdd-' + cat.id).addEventListener('click', function() {
+      if (cat.rows.length >= STAFF_MAX_ROWS) { alert('Maximale Zeilenanzahl (' + STAFF_MAX_ROWS + ') erreicht.'); return; }
+      cat.rows.push(staffNewRow()); renderStaffCatPanel(cat); renderStaffSummary(); saveStaffState();
+    });
+
+    renderStaffCatPanel(cat);
+  });
+
+  /* Section collapse toggle */
+  var toggleBtn = document.getElementById('staffToggleBtn');
+  var body = document.getElementById('staffSectionBody');
+  if (toggleBtn && body) {
+    toggleBtn.addEventListener('click', function() {
+      var hidden = body.style.display === 'none';
+      body.style.display = hidden ? '' : 'none';
+      toggleBtn.textContent = hidden ? 'Ausblenden' : 'Einblenden';
+    });
+  }
+
+  renderStaffSummary();
+}
+
 /* init */
 function init(){
   var ySel=document.getElementById('year'),cy=new Date().getFullYear();
@@ -714,5 +972,6 @@ function init(){
     });
   });
   updateSaveVisibility();
+  initStaffSection();
 }
 document.addEventListener('DOMContentLoaded',init);

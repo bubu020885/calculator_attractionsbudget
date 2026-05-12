@@ -152,6 +152,43 @@
       <div id="infoMsg" class="info-msg"></div>
     </section>
 
+    <!-- ===== Personaleinsatzplanung ===== -->
+    <section class="staff-section" id="staffSection">
+      <div class="staff-section-header">
+        <h2>Personaleinsatzplanung</h2>
+        <button type="button" id="staffToggleBtn" class="btn-staff-toggle">Ausblenden</button>
+      </div>
+
+      <div id="staffSectionBody">
+        <!-- Global parameters -->
+        <div class="staff-global">
+          <div class="staff-global-params">
+            <div class="staff-param-block">
+              <label for="staffSV">SV-Zuschlag</label>
+              <div class="staff-param-input-wrap">
+                <input type="number" id="staffSV" min="0" max="100" step="0.1" value="20" />
+                <span>%</span>
+              </div>
+            </div>
+            <div class="staff-param-block">
+              <label for="staffPuffer">Puffer</label>
+              <div class="staff-param-input-wrap">
+                <input type="number" id="staffPuffer" min="0" max="100" step="0.1" value="10" />
+                <span>%</span>
+              </div>
+            </div>
+          </div>
+          <div class="staff-cat-settings" id="staffCatSettings"></div>
+        </div>
+
+        <!-- Category panels (rendered by JS) -->
+        <div id="staffCatPanels"></div>
+
+        <!-- Summary -->
+        <div class="staff-summary-section" id="staffSummarySection"></div>
+      </div>
+    </section>
+
     <section id="results" class="hidden">
       <!-- Besucher summary -->
       <div class="summary-bar">
