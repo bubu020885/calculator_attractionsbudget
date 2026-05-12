@@ -818,6 +818,162 @@ function staffRefreshRow(tr, cat, idx) {
   saveStaffState();
 }
 
+/* ---- Excel export ---- */
+async function toExcelStaff() {
+  await ensureXLSX();
+  var wb = XLSX.utils.book_new();
+  var now = new Date().toLocaleDateString('de-DE');
+
+  /* Sheet 1: Zusammenfassung */
+  var basis = staffDailyBase();
+  var sv    = basis * STAFF_PARAMS.sv / 100;
+  var withSv = basis + sv;
+  var puff  = withSv * STAFF_PARAMS.puffer / 100;
+  var total = withSv + puff;
+
+  var sumData = [
+    ['Personaleinsatzplanung – Kostenübersicht', '', 'Erstellt:', now],
+    [],
+    ['Parameter', 'Wert'],
+    ['SV-Zuschlag', STAFF_PARAMS.sv + ' %'],
+    ['Puffer',      STAFF_PARAMS.puffer + ' %'],
+    []
+  ];
+  STAFF_CATS.forEach(function(cat) {
+    sumData.push(['Ø Stundenlohn ' + cat.label, (cat.active ? '' : '[inaktiv]  ') + cat.hourlyRate.toFixed(2) + ' €']);
+  });
+  sumData.push([], ['Kostenausweis', 'Täglich', 'Wöchentlich (×7)', 'Monatlich (×30)']);
+  sumData.push(['Basis Personalkosten (Netto)', Math.round(basis*100)/100, Math.round(basis*7*100)/100, Math.round(basis*30*100)/100]);
+  sumData.push(['SV-Zuschlag (' + STAFF_PARAMS.sv + ' %)',  Math.round(sv*100)/100,        Math.round(sv*7*100)/100,        Math.round(sv*30*100)/100]);
+  sumData.push(['Puffer ('      + STAFF_PARAMS.puffer + ' %)', Math.round(puff*100)/100,   Math.round(puff*7*100)/100,      Math.round(puff*30*100)/100]);
+  sumData.push(['GESAMT',        Math.round(total*100)/100,   Math.round(total*7*100)/100, Math.round(total*30*100)/100]);
+
+  /* Category overview row */
+  sumData.push([], ['Kategorie', 'Aktiv', 'Zeilen', 'Tageskosten (Netto)']);
+  STAFF_CATS.forEach(function(cat) {
+    var catTotal = cat.active ? cat.rows.reduce(function(s,r){return s+staffRowCalc(r,cat).tageskosten;},0) : 0;
+    sumData.push([cat.label, cat.active ? 'Ja' : 'Nein', cat.rows.length, Math.round(catTotal*100)/100]);
+  });
+
+  var wsSum = XLSX.utils.aoa_to_sheet(sumData);
+  wsSum['!cols'] = [{wch:36},{wch:18},{wch:20},{wch:20}];
+  XLSX.utils.book_append_sheet(wb, wsSum, 'Zusammenfassung');
+
+  /* One sheet per category */
+  var hdr = ['Name / Einheit', 'Öffnung', 'Schließung', 'Dauer (h)', 'Headcount', 'Stundenlohn (€)', 'Tageskosten (€)'];
+  STAFF_CATS.forEach(function(cat) {
+    var rows = [hdr];
+    cat.rows.forEach(function(row) {
+      var c = staffRowCalc(row, cat);
+      rows.push([row.name, row.open, row.close,
+        Math.round(c.dur*100)/100,
+        row.headcount,
+        Math.round(c.lohnProMA*100)/100,
+        Math.round(c.tageskosten*100)/100]);
+    });
+    /* total row */
+    var catTotal = cat.rows.reduce(function(s,r){return s+staffRowCalc(r,cat).tageskosten;},0);
+    rows.push(['GESAMT', '', '', '', '', '', Math.round(catTotal*100)/100]);
+
+    var ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{wch:26},{wch:10},{wch:12},{wch:10},{wch:11},{wch:16},{wch:16}];
+    XLSX.utils.book_append_sheet(wb, ws, cat.label);
+  });
+
+  var buf  = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+  var blob = new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  await saveBlob(blob, 'Personaleinsatzplanung.xlsx', 'Excel-Datei',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', ['.xlsx']);
+}
+
+/* ---- PDF export ---- */
+async function toPdfStaff() {
+  await ensurePDF();
+  var jsPDF = window.jspdf.jsPDF;
+  var doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
+  var now = new Date().toLocaleDateString('de-DE');
+
+  var basis  = staffDailyBase();
+  var sv     = basis * STAFF_PARAMS.sv / 100;
+  var withSv = basis + sv;
+  var puff   = withSv * STAFF_PARAMS.puffer / 100;
+  var total  = withSv + puff;
+
+  /* Page 1 – overview */
+  doc.setFontSize(16); doc.setTextColor(63,81,181);
+  doc.text('Personaleinsatzplanung', 14, 14);
+  doc.setFontSize(9); doc.setTextColor(80,80,80);
+  doc.text('SV-Zuschlag: ' + STAFF_PARAMS.sv + ' %   |   Puffer: ' + STAFF_PARAMS.puffer + ' %   |   Erstellt: ' + now, 14, 20);
+
+  /* Cost summary table */
+  doc.autoTable({
+    head: [['Kostenausweis', 'Täglich', 'Wöchentlich (× 7)', 'Monatlich (× 30)']],
+    body: [
+      ['Basis Personalkosten (Netto)', fmtEUR(basis),  fmtEUR(basis*7),  fmtEUR(basis*30)],
+      ['SV-Zuschlag (' + STAFF_PARAMS.sv + ' %)',      fmtEUR(sv),    fmtEUR(sv*7),    fmtEUR(sv*30)],
+      ['Puffer ('      + STAFF_PARAMS.puffer + ' %)',  fmtEUR(puff),  fmtEUR(puff*7),  fmtEUR(puff*30)],
+      [{content:'GESAMT', styles:{fontStyle:'bold'}}, {content:fmtEUR(total),styles:{fontStyle:'bold'}},
+       {content:fmtEUR(total*7),styles:{fontStyle:'bold'}}, {content:fmtEUR(total*30),styles:{fontStyle:'bold'}}]
+    ],
+    startY: 24, margin:{left:14, right:14},
+    styles:{fontSize:9, cellPadding:2},
+    headStyles:{fillColor:[63,81,181], textColor:255},
+    columnStyles:{1:{halign:'right'}, 2:{halign:'right'}, 3:{halign:'right'}},
+    theme:'grid'
+  });
+
+  /* Category summary table */
+  var catSumY = doc.lastAutoTable.finalY + 6;
+  var catSumBody = STAFF_CATS.map(function(cat) {
+    var catTotal = cat.active ? cat.rows.reduce(function(s,r){return s+staffRowCalc(r,cat).tageskosten;},0) : 0;
+    return [cat.label, cat.active ? 'Aktiv' : 'Inaktiv', cat.rows.length,
+            cat.hourlyRate.toFixed(2) + ' €', fmtEUR(catTotal), fmtEUR(catTotal*7), fmtEUR(catTotal*30)];
+  });
+  doc.autoTable({
+    head: [['Kategorie','Status','Zeilen','Ø Stundenlohn','Tageskosten','Wochenkosten','Monatskosten']],
+    body: catSumBody,
+    startY: catSumY, margin:{left:14, right:14},
+    styles:{fontSize:9, cellPadding:2},
+    headStyles:{fillColor:[48,63,159], textColor:255},
+    columnStyles:{2:{halign:'right'}, 3:{halign:'right'}, 4:{halign:'right'}, 5:{halign:'right'}, 6:{halign:'right'}},
+    theme:'striped'
+  });
+
+  /* One page per active category with rows */
+  var catColors = {ops:[63,81,181], fb:[245,158,11], ret:[16,185,129], ent:[139,92,246]};
+  STAFF_CATS.forEach(function(cat) {
+    if (!cat.active || !cat.rows.length) return;
+    doc.addPage();
+    var col = catColors[cat.id] || [63,81,181];
+    doc.setFontSize(13); doc.setTextColor(col[0], col[1], col[2]);
+    doc.text(cat.label, 14, 14);
+    doc.setFontSize(9); doc.setTextColor(80,80,80);
+    doc.text('Ø Stundenlohn: ' + cat.hourlyRate.toFixed(2) + ' €   |   Zeilen: ' + cat.rows.length, 14, 20);
+
+    var body = cat.rows.map(function(row) {
+      var c = staffRowCalc(row, cat);
+      return [row.name || '—', row.open, row.close, fmtH(c.dur),
+              row.headcount, fmtEUR(c.lohnProMA), fmtEUR(c.tageskosten)];
+    });
+    var catTotal = cat.rows.reduce(function(s,r){return s+staffRowCalc(r,cat).tageskosten;},0);
+    body.push([{content:'GESAMT', colSpan:6, styles:{fontStyle:'bold', halign:'right', fillColor:[232,234,246]}},
+               {content:fmtEUR(catTotal), styles:{fontStyle:'bold', halign:'right', fillColor:[232,234,246]}}]);
+
+    doc.autoTable({
+      head: [['Name / Einheit','Öffnung','Schließung','Dauer','Headcount','Stundenlohn (Netto)','Tageskosten']],
+      body: body,
+      startY: 24, margin:{left:14, right:14},
+      styles:{fontSize:9, cellPadding:2, overflow:'linebreak'},
+      headStyles:{fillColor:col, textColor:255, fontStyle:'bold'},
+      alternateRowStyles:{fillColor:[248,250,252]},
+      columnStyles:{3:{halign:'right'}, 4:{halign:'right'}, 5:{halign:'right'}, 6:{halign:'right',fontStyle:'bold'}}
+    });
+  });
+
+  var blob = doc.output('blob');
+  await saveBlob(blob, 'Personaleinsatzplanung.pdf', 'PDF-Datei', 'application/pdf', ['.pdf']);
+}
+
 /* Persistence */
 var STAFF_LS_KEY = 'vb:staff:v1';
 function saveStaffState() {
@@ -899,6 +1055,12 @@ function initStaffSection() {
 
     renderStaffCatPanel(cat);
   });
+
+  /* Export buttons */
+  var staffExcelBtn = document.getElementById('staffExcelBtn');
+  var staffPdfBtn   = document.getElementById('staffPdfBtn');
+  if (staffExcelBtn) staffExcelBtn.addEventListener('click', function(e){withLoading(e.currentTarget,'Exportiere…',toExcelStaff);});
+  if (staffPdfBtn)   staffPdfBtn.addEventListener('click',   function(e){withLoading(e.currentTarget,'Exportiere…',toPdfStaff);});
 
   /* Section collapse toggle */
   var toggleBtn = document.getElementById('staffToggleBtn');

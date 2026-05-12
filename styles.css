@@ -1001,6 +1001,14 @@ footer {
 .staff-btn-del { background: #fee2e2; color: #dc2626; }
 .staff-btn-del:hover { background: #fecaca; }
 
+/* Actions bar inside staff section */
+.staff-actions-bar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
 /* Summary section */
 .staff-summary-section {
   margin-top: 16px;
