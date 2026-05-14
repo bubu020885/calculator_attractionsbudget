@@ -196,6 +196,9 @@
     </section>
 
     <section id="results" class="hidden">
+      <!-- Tage nach Auslastung -->
+      <div class="occ-bar" id="occBar"></div>
+
       <!-- Besucher summary -->
       <div class="summary-bar">
         <div class="summary-card">
@@ -240,14 +243,26 @@
         </div>
       </div>
 
-      <div class="grid-2">
-        <div class="card">
-          <h3>Tage nach Auslastung</h3>
-          <div class="counts-grid" id="countsGrid"></div>
+      <!-- Personalkosten + Ergebnis -->
+      <div class="summary-bar summary-bar-staff" id="staffYearBar" style="display:none"></div>
+
+      <!-- Monatsbudget -->
+      <div class="card">
+        <h3>Monatsbudget</h3>
+        <div class="monthly-grid" id="monthlyGrid"></div>
+      </div>
+
+      <!-- Chart -->
+      <div class="card chart-card" id="chartCard">
+        <div class="chart-card-header">
+          <h3>Monatliche Entwicklung</h3>
+          <label class="chart-vis-label">
+            <input type="checkbox" id="chartVisible" checked />
+            Grafik anzeigen
+          </label>
         </div>
-        <div class="card">
-          <h3>Monatsbudget</h3>
-          <div class="monthly-grid" id="monthlyGrid"></div>
+        <div id="chartWrap">
+          <canvas id="monthChart"></canvas>
         </div>
       </div>
 

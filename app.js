@@ -321,37 +321,187 @@ function renderSummary(){
     mg.appendChild(d);
   }
 
-  /* counts: Row1=Off+Season, Row2=Low/Med/High/Peak, Row3=Close */
+
+  /* Tage nach Auslastung – coloured chips above summary */
   var counts={};OCCUPANCY_OPTIONS.forEach(function(o){counts[o.value]=0;});
   S.rows.forEach(function(r){counts[r.occ]=(counts[r.occ]||0)+1;});
-  var cg=document.getElementById('countsGrid');cg.innerHTML='';
-
-  function mkItem(val,lbl,pct,cls){
-    var d=document.createElement('div');d.className='count-item '+cls;
-    d.innerHTML='<div class="count-label">'+lbl+' &middot; '+pct+'%</div><div class="count-value">'+counts[val]+'</div>';
-    return d;
+  var ob=document.getElementById('occBar');
+  if(ob){
+    var occDef=[
+      {val:'Close',label:'Geschlossen',pct:0,  color:'var(--close)'},
+      {val:'Off',  label:'Off',        pct:0,  color:'var(--off)'},
+      {val:'Low',  label:'Low',        pct:25, color:'var(--low)'},
+      {val:'Medium',label:'Medium',    pct:50, color:'var(--medium)'},
+      {val:'High', label:'High',       pct:75, color:'var(--high)'},
+      {val:'Peak', label:'Peak',       pct:100,color:'var(--peak)'}
+    ];
+    ob.innerHTML='<span class="occ-bar-title">Tage nach Auslastung</span>'
+      +occDef.map(function(o){
+        return '<div class="occ-chip">'
+          +'<span class="occ-dot" style="background:'+o.color+'"></span>'
+          +'<span class="occ-chip-label">'+o.label
+          +(o.pct>0?' · '+o.pct+'%':'')+' </span>'
+          +'<span class="occ-chip-count">'+counts[o.val]+'</span>'
+          +'</div>';
+      }).join('')
+      +'<div class="occ-chip occ-chip-season">'
+      +'<span class="occ-chip-label">Saisontage</span>'
+      +'<span class="occ-chip-count">'+sDays+'</span>'
+      +'</div>';
   }
-  function mkSeasonItem(){
-    var d=document.createElement('div');d.className='count-item count-season';
-    d.innerHTML='<div class="count-label">Saisontage</div><div class="count-value">'+sDays+'</div>';
-    return d;
+
+  /* Personalkosten + Jahresergebnis bar */
+  var staffDay=staffTotalDaily();
+  var syb=document.getElementById('staffYearBar');
+  if(syb){
+    if(staffDay>0){
+      var totalOpenDays=S.rows.filter(function(r){return occPct(r.occ)>0;}).length;
+      var staffYear=staffDay*totalOpenDays;
+      var ergebnisYear=revT.total-staffYear;
+      syb.style.display='';
+      syb.innerHTML=''
+        +'<div class="summary-card staff-year-card">'
+          +'<div class="label">Jahrespersonalkosten</div>'
+          +'<div class="value">'+fmtEUR(staffYear)+'</div>'
+        +'</div>'
+        +'<div class="summary-card staff-year-result '+(ergebnisYear<0?'staff-year-neg':'staff-year-pos')+'">'
+          +'<div class="label">Jahresergebnis</div>'
+          +'<div class="value">'+(ergebnisYear<0?'−':'')+fmtEUR(Math.abs(ergebnisYear))+'</div>'
+        +'</div>';
+    }else{
+      syb.style.display='none';
+    }
   }
 
-  var row1=document.createElement('div');row1.className='counts-row';
-  row1.appendChild(mkItem('Off','Off',0,'count-off'));
-  row1.appendChild(mkSeasonItem());
-  cg.appendChild(row1);
+  /* Chart */
+  var mStaff=mOpenDays.map(function(d){return staffDay*d;});
+  renderMonthChart(monthly,mRev,mStaff);
+}
 
-  var row2=document.createElement('div');row2.className='counts-row';
-  row2.appendChild(mkItem('Low','Low',25,'count-low'));
-  row2.appendChild(mkItem('Medium','Medium',50,'count-medium'));
-  row2.appendChild(mkItem('High','High',75,'count-high'));
-  row2.appendChild(mkItem('Peak','Peak',100,'count-peak'));
-  cg.appendChild(row2);
 
-  var row3=document.createElement('div');row3.className='counts-row';
-  row3.appendChild(mkItem('Close','Close',0,'count-close'));
-  cg.appendChild(row3);
+/* ---- Monthly chart ---- */
+function renderMonthChart(monthly, mRev, mStaff) {
+  var canvas = document.getElementById('monthChart');
+  var wrap   = document.getElementById('chartWrap');
+  if (!canvas || !wrap) return;
+
+  var visible = document.getElementById('chartVisible');
+  if (visible && !visible.checked) { wrap.style.display = 'none'; return; }
+  wrap.style.display = '';
+
+  var dpr = window.devicePixelRatio || 1;
+  var W   = canvas.parentElement.clientWidth || 800;
+  var H   = 300;
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  var padL = 68, padR = 80, padT = 22, padB = 48;
+  var cW = W - padL - padR, cH = H - padT - padB;
+
+  var maxV = Math.max.apply(null, monthly.concat([1]));
+  var revData  = mRev.map(function(r){return r.total;});
+  var hasStaff = mStaff && mStaff.some(function(v){return v>0;});
+  var ergData  = hasStaff ? mRev.map(function(r,i){return r.total-mStaff[i];}) : [];
+  var maxR = Math.max.apply(null, revData.concat(ergData).concat([1]));
+
+  var C = { bar:'#6b8cff', line:'#0e7490', erg:'#10b981', ergNeg:'#ef4444',
+            grid:'#e5e7eb', text:'#6b7280', axis:'#374151' };
+
+  /* background */
+  ctx.fillStyle = '#fff'; ctx.fillRect(0,0,W,H);
+
+  /* grid lines + left y-labels (visitors) */
+  ctx.font = '11px -apple-system,BlinkMacSystemFont,sans-serif';
+  var gridN = 5;
+  for (var g = 0; g <= gridN; g++) {
+    var gy = padT + (g / gridN) * cH;
+    ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(padL, gy); ctx.lineTo(padL + cW, gy); ctx.stroke();
+    var vLabel = Math.round(maxV * (1 - g / gridN));
+    ctx.fillStyle = C.axis; ctx.textAlign = 'right';
+    ctx.fillText(vLabel.toLocaleString('de-DE'), padL - 6, gy + 4);
+  }
+
+  /* bars – visitors */
+  var step = cW / 12;
+  var bW   = step * 0.52;
+  monthly.forEach(function(v, i) {
+    var x = padL + i * step + (step - bW) / 2;
+    var h = cH * (v / maxV);
+    ctx.fillStyle = C.bar; ctx.globalAlpha = 0.72;
+    ctx.fillRect(x, padT + cH - h, bW, h);
+    ctx.globalAlpha = 1;
+  });
+
+  /* line helper */
+  function drawLine(data, maxVal, strokeCol) {
+    ctx.strokeStyle = strokeCol; ctx.lineWidth = 2.2; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    data.forEach(function(v, i) {
+      var x = padL + i * step + step / 2;
+      var y = padT + cH * (1 - Math.max(0, v) / maxVal);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+    /* dots */
+    data.forEach(function(v, i) {
+      var col = (strokeCol === C.erg && v < 0) ? C.ergNeg : strokeCol;
+      ctx.fillStyle = col;
+      ctx.beginPath();
+      ctx.arc(padL + i * step + step / 2, padT + cH * (1 - Math.max(0, v) / maxVal), 3.5, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
+
+  drawLine(revData, maxR, C.line);
+  if (hasStaff) drawLine(ergData, maxR, C.erg);
+
+  /* right y-axis labels (revenue) */
+  for (var g2 = 0; g2 <= gridN; g2++) {
+    var gy2 = padT + (g2 / gridN) * cH;
+    var rVal = maxR * (1 - g2 / gridN);
+    var rStr = rVal >= 1e6 ? (rVal/1e6).toFixed(1).replace('.',',')+' Mio €'
+             : rVal >= 1e3 ? (rVal/1e3).toFixed(0).replace('.',',')+' T€'
+             : fmtEUR(rVal);
+    ctx.fillStyle = C.axis; ctx.textAlign = 'left';
+    ctx.fillText(rStr, padL + cW + 6, gy2 + 4);
+  }
+
+  /* x-axis month labels */
+  var mShort = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+  ctx.fillStyle = C.text; ctx.textAlign = 'center';
+  mShort.forEach(function(m, i) {
+    ctx.fillText(m, padL + i * step + step / 2, H - padB + 16);
+  });
+
+  /* axis lines */
+  ctx.strokeStyle = '#d1d5db'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(padL, padT); ctx.lineTo(padL, padT + cH); ctx.lineTo(padL + cW, padT + cH); ctx.stroke();
+
+  /* legend */
+  var legY = H - 10;
+  ctx.font = '11px -apple-system,BlinkMacSystemFont,sans-serif';
+  function legItem(x, fillCol, alpha, label, isLine) {
+    if (isLine) {
+      ctx.strokeStyle = fillCol; ctx.lineWidth = 2.2;
+      ctx.beginPath(); ctx.moveTo(x, legY - 5); ctx.lineTo(x + 18, legY - 5); ctx.stroke();
+      ctx.fillStyle = fillCol; ctx.beginPath(); ctx.arc(x + 9, legY - 5, 3, 0, Math.PI * 2); ctx.fill();
+    } else {
+      ctx.globalAlpha = alpha; ctx.fillStyle = fillCol;
+      ctx.fillRect(x, legY - 10, 18, 10); ctx.globalAlpha = 1;
+    }
+    ctx.fillStyle = C.axis; ctx.textAlign = 'left';
+    ctx.fillText(label, x + 22, legY);
+    return x + 22 + ctx.measureText(label).width + 18;
+  }
+  var lx = padL;
+  lx = legItem(lx, C.bar, 0.72, 'Besucher', false);
+  lx = legItem(lx, C.line, 1, 'Umsatz', true);
+  if (hasStaff) legItem(lx, C.erg, 1, 'Ergebnis', true);
 }
 
 /* reapply / reset */
@@ -1167,6 +1317,13 @@ function init(){
       for(var i=0;i<7;i++){var el=document.getElementById(prefix+'-'+i);if(el){el.value=val;el.dataset.occ=val;}}
     });
   });
+  /* chart visibility toggle */
+  document.addEventListener('change', function(e) {
+    if (e.target && e.target.id === 'chartVisible') {
+      if (S.rows.length) renderSummary();
+    }
+  });
+
   updateSaveVisibility();
   initStaffSection();
 }

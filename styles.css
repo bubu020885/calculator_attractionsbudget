@@ -380,6 +380,112 @@ button:disabled { background: #9ca3af; cursor: not-allowed; }
 .info-msg.warning::before { content: "\26A0"; color: #d97706; font-size: 1.1rem; flex-shrink: 0; }
 .info-msg.success::before { content: "\2713"; color: #10b981; font-size: 1.1rem; flex-shrink: 0; }
 
+/* Occupancy chips bar */
+.occ-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--card-bg);
+  border-radius: 10px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+}
+.occ-bar-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-right: 4px;
+  white-space: nowrap;
+}
+.occ-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  background: #f3f4f6;
+  border: 1px solid var(--border);
+  font-size: 0.8rem;
+}
+.occ-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.occ-chip-label {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.occ-chip-count {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  font-size: 0.88rem;
+}
+.occ-chip-season {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+.occ-chip-season .occ-chip-label { color: var(--primary-dark); font-weight: 700; }
+.occ-chip-season .occ-chip-count { color: var(--primary-dark); }
+
+/* Staff year summary bar */
+.summary-bar-staff {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.staff-year-card {
+  background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+}
+.staff-year-pos {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+.staff-year-neg {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+}
+
+/* Chart card */
+.chart-card {
+  padding: 20px;
+}
+.chart-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.chart-card-header h3 { margin: 0; }
+.chart-vis-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+}
+.chart-vis-label input[type="checkbox"] {
+  width: 15px; height: 15px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+#chartWrap {
+  width: 100%;
+  overflow: hidden;
+}
+#monthChart {
+  display: block;
+  width: 100%;
+}
+
 /* Summary cards */
 .summary-bar {
   display: grid;
