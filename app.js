@@ -306,7 +306,8 @@ function renderSummary(){
     var staffMonth=staffDay*mOpenDays[i];
     var ergebnis=mRev[i].total-staffMonth;
     var hasStaff=staffDay>0;
-    var d=document.createElement('div');d.className='monthly-item';
+    var isClosed=(monthly[i]===0);
+    var d=document.createElement('div');d.className='monthly-item'+(isClosed?' monthly-item-closed':'');
     d.innerHTML='<div class="month-header"><span class="month-name">'+MONTHS_DE[i]+'</span></div>'
       +'<div class="month-line"><span class="ml-label">Besucher</span><span class="ml-val">'+monthly[i].toLocaleString('de-DE')+'</span></div>'
       +'<div class="month-line"><span class="ml-label">Ticketing</span><span class="ml-val">'+fmtEUR(mRev[i].ticketing)+'</span></div>'
@@ -706,7 +707,7 @@ async function toExcel(){
 async function toPdf(){
   if(!S.rows.length)return;
   await ensurePDF();
-  var jsPDF=window.jspdf.jsPDF;var doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  var jsPDF=window.jspdf.jsPDF;var doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
   var yt=0;S.rows.forEach(function(r){yt+=calcV(r);});
   var open=S.rows.filter(function(r){return occPct(r.occ)>0;}).length;
   var avgD=open>0?Math.round(yt/open):0;
@@ -744,7 +745,7 @@ async function toPdf(){
   mr.push([{content:'Gesamt',styles:{fontStyle:'bold',fillColor:[232,234,246]}},{content:yt.toLocaleString('de-DE'),styles:{fontStyle:'bold',halign:'right',fillColor:[232,234,246]}}]);
   doc.autoTable({
     head:[['Monat','Besucher']],body:mr,
-    startY:y1,margin:{left:14},tableWidth:120,
+    startY:y1,margin:{left:14},tableWidth:82,
     styles:{fontSize:8,cellPadding:1.5},
     headStyles:{fillColor:[63,81,181],textColor:255},
     columnStyles:{1:{halign:'right'}}
@@ -753,7 +754,7 @@ async function toPdf(){
   var cr=[];OCCUPANCY_OPTIONS.forEach(function(o){var c=0;S.rows.forEach(function(r){if(r.occ===o.value)c++;});cr.push([o.label,o.percent+'%',c.toLocaleString('de-DE')]);});
   doc.autoTable({
     head:[['Auslastung','%','Tage']],body:cr,
-    startY:y1,margin:{left:140},tableWidth:140,
+    startY:y1,margin:{left:100},tableWidth:82,
     styles:{fontSize:8,cellPadding:1.5},
     headStyles:{fillColor:[63,81,181],textColor:255},
     columnStyles:{1:{halign:'right'},2:{halign:'right'}}
@@ -772,7 +773,7 @@ async function toPdf(){
   S.rows.forEach(function(r,idx){idxByMonth[r.date.getMonth()].push(idx);});
 
   var headCols=[['Datum','Wochentag','Feiertag/Ferien','Auslastung','Besucher','Umsatz','Notizen']];
-  var colStyles={0:{cellWidth:20},1:{cellWidth:20},2:{cellWidth:58},3:{cellWidth:24},4:{cellWidth:20,halign:'right'},5:{cellWidth:22,halign:'right'},6:{cellWidth:'auto'}};
+  var colStyles={0:{cellWidth:17},1:{cellWidth:14},2:{cellWidth:46},3:{cellWidth:20},4:{cellWidth:14,halign:'right'},5:{cellWidth:18,halign:'right'},6:{cellWidth:'auto'}};
 
   function makeParser(meta){
     return function(data){
@@ -892,18 +893,25 @@ function renderStaffSummary() {
       + '<span class="staff-sum-value">' + fmtEUR(val) + '</span></div>';
   }
 
-  /* per-category breakdown */
+  /* per-category breakdown with headcount */
   var catRows = '';
+  var totalHC = 0;
   STAFF_CATS.forEach(function(cat) {
     if (!cat.active) return;
+    var catHC = cat.rows.reduce(function(s,r){return s+(r.headcount||0);},0);
+    totalHC += catHC;
     var catBase = cat.rows.reduce(function(s, r) { return s + staffRowCalc(r, cat).tageskosten; }, 0);
     var catTotal = catBase * (1 + STAFF_PARAMS.sv / 100) * (1 + STAFF_PARAMS.puffer / 100);
-    catRows += sumRow(cat.label, catTotal, 'cat');
+    catRows += '<div class="staff-sum-row staff-sum-cat">'
+      + '<span class="staff-sum-label">' + cat.label
+        + ' <span class="staff-hc-badge">' + catHC + ' MA</span></span>'
+      + '<span class="staff-sum-value">' + fmtEUR(catTotal) + '</span></div>';
   });
 
   el.innerHTML = '<div class="staff-summary-grid">'
     + (catRows
-        ? '<div class="staff-sum-section-label">Abteilungskosten (Tageskosten gesamt)</div>'
+        ? '<div class="staff-sum-section-label">Abteilungskosten (Tageskosten gesamt)'
+            + ' <span class="staff-hc-total">' + totalHC + ' MA gesamt</span></div>'
           + catRows
           + '<div class="staff-sum-divider"></div>'
         : '')
@@ -928,7 +936,7 @@ function renderStaffCatPanel(cat) {
   panel.style.display = '';
 
   var html = '<table class="staff-table"><thead><tr>'
-    + '<th>Name / Einheit</th><th>\xd6ffnung</th><th>Schlie\xdfung</th>'
+    + '<th>Ride / Venue / Position</th><th>\xd6ffnung</th><th>Schlie\xdfung</th>'
     + '<th>Dauer</th><th>Headcount</th><th>Stundenlohn (Netto)</th><th>Tageskosten</th><th></th>'
     + '</tr></thead><tbody>';
 
@@ -1044,7 +1052,7 @@ async function toExcelStaff() {
   XLSX.utils.book_append_sheet(wb, wsSum, 'Zusammenfassung');
 
   /* One sheet per category */
-  var hdr = ['Name / Einheit', 'Öffnung', 'Schließung', 'Dauer (h)', 'Headcount', 'Stundenlohn (€)', 'Tageskosten (€)'];
+  var hdr = ['Ride / Venue / Position', 'Öffnung', 'Schließung', 'Dauer (h)', 'Headcount', 'Stundenlohn (€)', 'Tageskosten (€)'];
   STAFF_CATS.forEach(function(cat) {
     var rows = [hdr];
     cat.rows.forEach(function(row) {
@@ -1136,7 +1144,7 @@ async function toPdfStaff() {
 
     var body = cat.rows.map(function(row) {
       var c = staffRowCalc(row, cat);
-      return [row.name || '—', row.open, row.close, fmtH(c.dur),
+      return [row.name || '—', row.open, row.close, c.dur.toFixed(2).replace('.', ',') + ' h',
               row.headcount, fmtEUR(c.lohnProMA), fmtEUR(c.tageskosten)];
     });
     var catTotal = cat.rows.reduce(function(s,r){return s+staffRowCalc(r,cat).tageskosten;},0);
@@ -1144,7 +1152,7 @@ async function toPdfStaff() {
                {content:fmtEUR(catTotal), styles:{fontStyle:'bold', halign:'right', fillColor:[232,234,246]}}]);
 
     doc.autoTable({
-      head: [['Name / Einheit','Öffnung','Schließung','Dauer','Headcount','Stundenlohn (Netto)','Tageskosten']],
+      head: [['Ride / Venue / Position','Öffnung','Schließung','Dauer','Headcount','Stundenlohn (Netto)','Tageskosten']],
       body: body,
       startY: 24, margin:{left:14, right:14},
       styles:{fontSize:9, cellPadding:2, overflow:'linebreak'},
