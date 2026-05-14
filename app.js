@@ -295,8 +295,17 @@ function renderSummary(){
   var monthly=Array(12).fill(0),mRev=[];
   for(var mi=0;mi<12;mi++)mRev.push({ticketing:0,retail:0,fb:0,machines:0,total:0});
   S.rows.forEach(function(r){var v=calcV(r),m=r.date.getMonth();monthly[m]+=v;var rv=calcDayRev(v);mRev[m].ticketing+=rv.ticketing;mRev[m].retail+=rv.retail;mRev[m].fb+=rv.fb;mRev[m].machines+=rv.machines;mRev[m].total+=rv.total;});
+
+  /* open days per month for staff cost allocation */
+  var mOpenDays=Array(12).fill(0);
+  S.rows.forEach(function(r){if(occPct(r.occ)>0)mOpenDays[r.date.getMonth()]++;});
+  var staffDay=staffTotalDaily();
+
   var mg=document.getElementById('monthlyGrid');mg.innerHTML='';
   for(var i=0;i<12;i++){
+    var staffMonth=staffDay*mOpenDays[i];
+    var ergebnis=mRev[i].total-staffMonth;
+    var hasStaff=staffDay>0;
     var d=document.createElement('div');d.className='monthly-item';
     d.innerHTML='<div class="month-header"><span class="month-name">'+MONTHS_DE[i]+'</span></div>'
       +'<div class="month-line"><span class="ml-label">Besucher</span><span class="ml-val">'+monthly[i].toLocaleString('de-DE')+'</span></div>'
@@ -304,7 +313,11 @@ function renderSummary(){
       +'<div class="month-line"><span class="ml-label">Retail</span><span class="ml-val">'+fmtEUR(mRev[i].retail)+'</span></div>'
       +'<div class="month-line"><span class="ml-label">F&amp;B</span><span class="ml-val">'+fmtEUR(mRev[i].fb)+'</span></div>'
       +'<div class="month-line"><span class="ml-label">Machines</span><span class="ml-val">'+fmtEUR(mRev[i].machines)+'</span></div>'
-      +'<div class="month-line month-line-umsatz"><span class="ml-label">Umsatz</span><span class="ml-val">'+fmtEUR(mRev[i].total)+'</span></div>';
+      +'<div class="month-line month-line-umsatz"><span class="ml-label">Umsatz</span><span class="ml-val">'+fmtEUR(mRev[i].total)+'</span></div>'
+      +(hasStaff
+        ?'<div class="month-line month-line-personal"><span class="ml-label">Personalkosten</span><span class="ml-val">−'+fmtEUR(staffMonth)+'</span></div>'
+         +'<div class="month-line month-line-ergebnis"><span class="ml-label">Ergebnis</span><span class="ml-val '+(ergebnis<0?'ml-val-neg':'')+'">'+(ergebnis<0?'−':'')+fmtEUR(Math.abs(ergebnis))+'</span></div>'
+        :'');
     mg.appendChild(d);
   }
 
@@ -696,6 +709,12 @@ function staffDailyBase() {
   return total;
 }
 
+function staffTotalDaily() {
+  var basis = staffDailyBase();
+  var withSv = basis * (1 + STAFF_PARAMS.sv / 100);
+  return withSv * (1 + STAFF_PARAMS.puffer / 100);
+}
+
 function fmtH(h) {
   return h.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' h';
 }
@@ -723,13 +742,27 @@ function renderStaffSummary() {
       + '<span class="staff-sum-value">' + fmtEUR(val) + '</span></div>';
   }
 
+  /* per-category breakdown */
+  var catRows = '';
+  STAFF_CATS.forEach(function(cat) {
+    if (!cat.active) return;
+    var catBase = cat.rows.reduce(function(s, r) { return s + staffRowCalc(r, cat).tageskosten; }, 0);
+    var catTotal = catBase * (1 + STAFF_PARAMS.sv / 100) * (1 + STAFF_PARAMS.puffer / 100);
+    catRows += sumRow(cat.label, catTotal, 'cat');
+  });
+
   el.innerHTML = '<div class="staff-summary-grid">'
+    + (catRows
+        ? '<div class="staff-sum-section-label">Abteilungskosten (Tageskosten gesamt)</div>'
+          + catRows
+          + '<div class="staff-sum-divider"></div>'
+        : '')
     + sumRow('Basis Tageskosten (Netto)', basis, '')
     + sumRow('SV-Zuschlag (' + STAFF_PARAMS.sv.toLocaleString('de-DE') + ' %)', sv, 'add')
     + sumRow('Puffer (' + STAFF_PARAMS.puffer.toLocaleString('de-DE') + ' %)', puff, 'add')
     + sumRow('Tageskosten Gesamt', total, 'total')
-    + sumRow('Wochenkosten Gesamt (\xd7 7)', total * 7, 'total')
-    + sumRow('Monatskosten Gesamt (\xd7 30)', total * 30, 'total')
+    + sumRow('Wochenkosten Gesamt (× 7)', total * 7, 'total')
+    + sumRow('Monatskosten Gesamt (× 30)', total * 30, 'total')
     + '</div>';
 }
 
@@ -739,9 +772,10 @@ function renderStaffCatPanel(cat) {
   var wrap = panel.querySelector('.staff-table-wrap');
 
   if (!cat.active) {
-    wrap.innerHTML = '<div class="staff-inactive-msg">Kategorie deaktiviert</div>';
+    panel.style.display = 'none';
     return;
   }
+  panel.style.display = '';
 
   var html = '<table class="staff-table"><thead><tr>'
     + '<th>Name / Einheit</th><th>\xd6ffnung</th><th>Schlie\xdfung</th>'

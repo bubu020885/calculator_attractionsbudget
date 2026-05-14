@@ -521,6 +521,12 @@ button:disabled { background: #9ca3af; cursor: not-allowed; }
 }
 .month-line-umsatz { border-top: 1px solid #e5e7eb; padding-top: 4px; margin-top: 2px; }
 .month-line-umsatz .ml-val { color: #0e7490; font-weight: 700; }
+.month-line-personal .ml-label { color: #b91c1c; }
+.month-line-personal .ml-val { color: #dc2626; font-weight: 600; }
+.month-line-ergebnis { border-top: 2px solid var(--primary-light); padding-top: 4px; margin-top: 2px; }
+.month-line-ergebnis .ml-label { font-weight: 700; color: var(--text); }
+.month-line-ergebnis .ml-val { font-weight: 800; color: var(--primary-dark); }
+.month-line-ergebnis .ml-val.ml-val-neg { color: #dc2626; }
 
 /* Actions bar */
 .actions-bar {
@@ -1051,6 +1057,21 @@ footer {
 .staff-sum-label { font-weight: 500; }
 .staff-sum-value { font-weight: 700; font-variant-numeric: tabular-nums; }
 .staff-sum-row.staff-sum-total .staff-sum-value { color: var(--primary-dark); }
+.staff-sum-row.staff-sum-cat { font-size: 0.88rem; padding: 4px 8px; }
+.staff-sum-row.staff-sum-cat .staff-sum-value { color: var(--text); }
+.staff-sum-section-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  padding: 6px 8px 2px;
+}
+.staff-sum-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 6px 0;
+}
 
 /* Responsive */
 @media (max-width: 900px) {
