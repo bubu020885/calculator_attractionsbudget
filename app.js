@@ -20,6 +20,7 @@ const OCCUPANCY_OPTIONS = [
 
 const UPGRADE_ORDER = ['Off', 'Low', 'Medium', 'High', 'Peak'];
 const WEEKDAYS_DE = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+const WEEKDAYS_SHORT = ['So','Mo','Di','Mi','Do','Fr','Sa'];
 const MONTHS_DE = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 
 const TPL_DAYS = [
@@ -773,7 +774,7 @@ async function toPdf(){
   S.rows.forEach(function(r,idx){idxByMonth[r.date.getMonth()].push(idx);});
 
   var headCols=[['Datum','Wochentag','Feiertag/Ferien','Auslastung','Besucher','Umsatz','Notizen']];
-  var colStyles={0:{cellWidth:17},1:{cellWidth:14},2:{cellWidth:46},3:{cellWidth:20},4:{cellWidth:14,halign:'right'},5:{cellWidth:18,halign:'right'},6:{cellWidth:'auto'}};
+  var colStyles={0:{cellWidth:17},1:{cellWidth:9},2:{cellWidth:50},3:{cellWidth:20},4:{cellWidth:14,halign:'right'},5:{cellWidth:18,halign:'right'},6:{cellWidth:'auto'}};
 
   function makeParser(meta){
     return function(data){
@@ -802,7 +803,7 @@ async function toPdf(){
     idxs.forEach(function(idx){
       var r=S.rows[idx],v=calcV(r);
       var h=[];if(r.ph)h.push(r.ph);if(r.sh)h.push('Ferien: '+r.sh);
-      body.push([fmtDE(r.date),WEEKDAYS_DE[r.date.getDay()],h.join('; '),r.occ+' ('+occPct(r.occ)+'%)',v.toLocaleString('de-DE'),fmtEUR(calcDayRev(v).total),r.notes]);
+      body.push([fmtDE(r.date),WEEKDAYS_SHORT[r.date.getDay()],h.join('; '),r.occ+' ('+occPct(r.occ)+'%)',v.toLocaleString('de-DE'),fmtEUR(calcDayRev(v).total),r.notes]);
       rowMeta.push(idx);
     });
 
