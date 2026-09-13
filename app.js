@@ -116,8 +116,9 @@ function applyLang() {
     var val = T(key);
     el.textContent = val;
   });
-  var lt = document.getElementById('langToggle');
-  if (lt) lt.textContent = LANG === 'de' ? 'EN' : 'DE';
+  document.querySelectorAll('.nav-lang-opt').forEach(function(el) {
+    el.classList.toggle('active', el.getAttribute('data-lang') === LANG);
+  });
 }
 
 const MONTHS_DE = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
@@ -1435,9 +1436,12 @@ function init(){
   updateSaveVisibility();
   initStaffSection();
   /* language toggle */
-  var lt = document.getElementById('langToggle');
-  if (lt) lt.addEventListener('click', function() {
-    LANG = LANG === 'de' ? 'en' : 'de';
+  var langWrap = document.getElementById('langToggle');
+  if (langWrap) langWrap.addEventListener('click', function(e) {
+    var opt = e.target.closest('.nav-lang-opt');
+    var chosen = opt ? opt.getAttribute('data-lang') : (LANG === 'de' ? 'en' : 'de');
+    if (chosen === LANG) return;
+    LANG = chosen;
     localStorage.setItem('vb:lang', LANG);
     applyLang();
     if (S.rows.length) { renderTable(); renderSummary(); }
