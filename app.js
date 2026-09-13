@@ -29,7 +29,7 @@ var MONTHS_CHART_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oc
 
 var TRANSLATIONS = {
   de: {
-    'nav.config':'Konfiguration','nav.staff':'Personalplanung','nav.results':'Ergebnisse','nav.home':'← Startseite',
+    'nav.config':'Konfiguration','nav.staff':'Personalplanung','nav.results':'Ergebnisse','nav.home':'← Startseite','nav.alltools':'Alle Tools ↗','page.toolTitle':'Budget-Rechner',
     'page.title':'Besucher-Budget-Rechner','page.subtitle':'Planen Sie Ihre erwarteten Besucherzahlen pro Tag für ein komplettes Kalenderjahr',
     'btn.load':'📂 Laden','btn.save':'💾 Speichern',
     'section.config':'Konfiguration','group.basic':'Grundeinstellungen','label.year':'Kalenderjahr','label.state':'Bundesland',
@@ -63,7 +63,7 @@ var TRANSLATIONS = {
     'note.placeholder':'z. B. Event…','ferien.prefix':'Ferien: '
   },
   en: {
-    'nav.config':'Configuration','nav.staff':'Staff Planning','nav.results':'Results','nav.home':'← Home',
+    'nav.config':'Configuration','nav.staff':'Staff Planning','nav.results':'Results','nav.home':'← Home','nav.alltools':'All Tools ↗','page.toolTitle':'Budget Calculator',
     'page.title':'Visitor Budget Calculator','page.subtitle':'Plan your expected visitor numbers per day for a complete calendar year',
     'btn.load':'📂 Load','btn.save':'💾 Save',
     'section.config':'Configuration','group.basic':'Basic Settings','label.year':'Calendar Year','label.state':'Federal State',
