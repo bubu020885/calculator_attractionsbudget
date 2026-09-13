@@ -21,6 +21,105 @@ const OCCUPANCY_OPTIONS = [
 const UPGRADE_ORDER = ['Off', 'Low', 'Medium', 'High', 'Peak'];
 const WEEKDAYS_DE = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
 const WEEKDAYS_SHORT = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+
+var MONTHS_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+var WEEKDAYS_EN = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+var MONTHS_CHART_DE = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+var MONTHS_CHART_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+var TRANSLATIONS = {
+  de: {
+    'nav.config':'Konfiguration','nav.staff':'Personalplanung','nav.results':'Ergebnisse','nav.home':'← Startseite',
+    'page.title':'Besucher-Budget-Rechner','page.subtitle':'Planen Sie Ihre erwarteten Besucherzahlen pro Tag für ein komplettes Kalenderjahr',
+    'btn.load':'📂 Laden','btn.save':'💾 Speichern',
+    'section.config':'Konfiguration','group.basic':'Grundeinstellungen','label.year':'Kalenderjahr','label.state':'Bundesland',
+    'label.maxVisitors':'Max. Besucher/Tag','group.season':'Saison (optional)','label.seasonStart':'Saisonbeginn','label.seasonEnd':'Saisonende',
+    'group.ticketing':'Ticketing','label.ticketAdult':'Erwachsene (€)','label.ticketChild':'Kind (€)','label.ticketReduced':'Ermäßigt (€)',
+    'label.vat':'MwSt','label.avgNet':'Ø Netto','group.revenue':'Umsatz pro Kopf','label.retail':'Retail (€)','label.fb':'F&B (€)','label.machines':'Machines (€)',
+    'tpl.normal':'Musterwoche — Normalbetrieb','tpl.holidays':'Musterwoche — Ferien',
+    'btn.allClose':'Alle Close','btn.allOff':'Alle Off','btn.allLow':'Alle Low','btn.allMedium':'Alle Medium','btn.allHigh':'Alle High','btn.allPeak':'Alle Peak',
+    'btn.reapply':'Musterwoche neu anwenden','btn.reset':'Zurücksetzen','btn.calculate':'Berechne Jahresbudget',
+    'section.staff':'Personaleinsatzplanung','btn.hide':'Ausblenden','btn.show':'Einblenden',
+    'label.sv':'SV-Zuschlag','label.puffer':'Puffer',
+    'btn.exportExcel':'Als Excel exportieren','btn.exportPdf':'Als PDF exportieren',
+    'card.yearTotal':'Jahresbudget (Besucher)','card.avgDay':'Ø pro Tag','card.avgMonth':'Ø pro Monat','card.seasonDays':'Saisontage',
+    'card.revTotal':'Jahresumsatz Gesamt','card.ticketing':'Ticketing','card.retail':'Retail','card.fb':'F&B','card.machines':'Machines',
+    'section.monthly':'Monatsbudget','section.chart':'Monatliche Entwicklung','label.showChart':'Grafik anzeigen',
+    'legend.weekend':'Wochenende','legend.holiday':'Feiertag','legend.school':'Schulferien','legend.offseason':'Außerhalb Saison',
+    'section.daytable':'Tagesübersicht','th.date':'Datum','th.weekday':'Wochentag','th.holiday':'Feiertag / Ferien',
+    'th.occ':'Auslastung','th.visitors':'Besucher','th.revenue':'Umsatz','th.notes':'Notizen',
+    'occ.title':'Tage nach Auslastung','occ.closed':'Geschlossen','occ.seasondays':'Saisontage',
+    'ml.visitors':'Besucher','ml.ticketing':'Ticketing','ml.retail':'Retail','ml.fb':'F&B','ml.machines':'Machines',
+    'ml.revenue':'Umsatz','ml.staff':'Personalkosten','ml.result':'Ergebnis',
+    'card.staffYear':'Jahrespersonalkosten','card.result':'Jahresergebnis',
+    'staff.deptCosts':'Abteilungskosten (Tageskosten gesamt)','staff.totalLabel':'MA gesamt','staff.maLabel':'MA',
+    'staff.basis':'Basis Tageskosten (Netto)','staff.svLabel':'SV-Zuschlag','staff.pufferLabel':'Puffer',
+    'staff.dayTotal':'Tageskosten Gesamt','staff.weekTotal':'Wochenkosten Gesamt (× 7)','staff.monthTotal':'Monatskosten Gesamt (× 30)',
+    'err.missing':'Bitte ausfüllen: ','err.state':'Bundesland','err.maxV':'Max. Besucher pro Tag (> 0)','err.year':'Kalenderjahr',
+    'info.noSchool':'Hinweis: Schulferien konnten nicht geladen werden. Die Tabelle funktioniert ohne Ferien-Informationen weiter.',
+    'btn.calculating':'Lade…','btn.exporting':'Exportiere…','btn.saving':'Speichere…',
+    'footer.privacy':'🔒 Ihre Daten werden nicht auf dem Server verarbeitet oder gespeichert. Alle Berechnungen erfolgen lokal in Ihrem Browser.',
+    'chart.visitors':'Besucher','chart.revenue':'Umsatz','chart.result':'Ergebnis',
+    'note.placeholder':'z. B. Event…','ferien.prefix':'Ferien: '
+  },
+  en: {
+    'nav.config':'Configuration','nav.staff':'Staff Planning','nav.results':'Results','nav.home':'← Home',
+    'page.title':'Visitor Budget Calculator','page.subtitle':'Plan your expected visitor numbers per day for a complete calendar year',
+    'btn.load':'📂 Load','btn.save':'💾 Save',
+    'section.config':'Configuration','group.basic':'Basic Settings','label.year':'Calendar Year','label.state':'Federal State',
+    'label.maxVisitors':'Max. Visitors/Day','group.season':'Season (optional)','label.seasonStart':'Season Start','label.seasonEnd':'Season End',
+    'group.ticketing':'Ticketing','label.ticketAdult':'Adults (€)','label.ticketChild':'Child (€)','label.ticketReduced':'Reduced (€)',
+    'label.vat':'VAT','label.avgNet':'Avg Net','group.revenue':'Revenue per Head','label.retail':'Retail (€)','label.fb':'F&B (€)','label.machines':'Machines (€)',
+    'tpl.normal':'Template Week — Normal Operations','tpl.holidays':'Template Week — School Holidays',
+    'btn.allClose':'All Close','btn.allOff':'All Off','btn.allLow':'All Low','btn.allMedium':'All Medium','btn.allHigh':'All High','btn.allPeak':'All Peak',
+    'btn.reapply':'Re-apply Template Week','btn.reset':'Reset','btn.calculate':'Calculate Annual Budget',
+    'section.staff':'Staff Scheduling','btn.hide':'Hide','btn.show':'Show',
+    'label.sv':'Social Security Surcharge','label.puffer':'Buffer',
+    'btn.exportExcel':'Export as Excel','btn.exportPdf':'Export as PDF',
+    'card.yearTotal':'Annual Budget (Visitors)','card.avgDay':'Avg per Day','card.avgMonth':'Avg per Month','card.seasonDays':'Season Days',
+    'card.revTotal':'Total Annual Revenue','card.ticketing':'Ticketing','card.retail':'Retail','card.fb':'F&B','card.machines':'Machines',
+    'section.monthly':'Monthly Budget','section.chart':'Monthly Development','label.showChart':'Show Chart',
+    'legend.weekend':'Weekend','legend.holiday':'Public Holiday','legend.school':'School Holidays','legend.offseason':'Out of Season',
+    'section.daytable':'Daily Overview','th.date':'Date','th.weekday':'Weekday','th.holiday':'Holiday / Vacation',
+    'th.occ':'Utilization','th.visitors':'Visitors','th.revenue':'Revenue','th.notes':'Notes',
+    'occ.title':'Days by Utilization','occ.closed':'Closed','occ.seasondays':'Season Days',
+    'ml.visitors':'Visitors','ml.ticketing':'Ticketing','ml.retail':'Retail','ml.fb':'F&B','ml.machines':'Machines',
+    'ml.revenue':'Revenue','ml.staff':'Personnel Costs','ml.result':'Result',
+    'card.staffYear':'Annual Personnel Costs','card.result':'Annual Result',
+    'staff.deptCosts':'Department Costs (total daily costs)','staff.totalLabel':'staff total','staff.maLabel':'staff',
+    'staff.basis':'Base Daily Costs (Net)','staff.svLabel':'Social Security Surcharge','staff.pufferLabel':'Buffer',
+    'staff.dayTotal':'Total Daily Costs','staff.weekTotal':'Total Weekly Costs (× 7)','staff.monthTotal':'Total Monthly Costs (× 30)',
+    'err.missing':'Please fill in: ','err.state':'Federal State','err.maxV':'Max. Visitors per Day (> 0)','err.year':'Calendar Year',
+    'info.noSchool':'Note: School holidays could not be loaded. The table works without holiday information.',
+    'btn.calculating':'Loading…','btn.exporting':'Exporting…','btn.saving':'Saving…',
+    'footer.privacy':'🔒 Your data is not processed or stored on the server. All calculations are performed locally in your browser.',
+    'chart.visitors':'Visitors','chart.revenue':'Revenue','chart.result':'Result',
+    'note.placeholder':'e.g. Event…','ferien.prefix':'Holidays: '
+  }
+};
+
+var LANG = (function(){
+  var stored = localStorage.getItem('vb:lang');
+  if (stored === 'de' || stored === 'en') return stored;
+  return (navigator.language || navigator.userLanguage || '').toLowerCase().startsWith('de') ? 'de' : 'en';
+}());
+
+function T(k) {
+  return (TRANSLATIONS[LANG] || TRANSLATIONS.de)[k] || TRANSLATIONS.de[k] || k;
+}
+
+function applyLang() {
+  document.documentElement.lang = LANG;
+  document.title = T('page.title') + ' — Budget Planner';
+  document.querySelectorAll('[data-i18n]').forEach(function(el) {
+    var key = el.getAttribute('data-i18n');
+    var val = T(key);
+    el.textContent = val;
+  });
+  var lt = document.getElementById('langToggle');
+  if (lt) lt.textContent = LANG === 'de' ? 'EN' : 'DE';
+}
+
 const MONTHS_DE = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 
 const TPL_DAYS = [
@@ -164,20 +263,20 @@ async function generate(){
   var sc=document.getElementById('state').value;
   var mv=parseInt(document.getElementById('maxVisitors').value,10)||0;
   var missing=[];
-  if(!sc)missing.push('Bundesland');
-  if(!mv||mv<=0)missing.push('Max. Besucher pro Tag (> 0)');
-  if(!y)missing.push('Kalenderjahr');
-  if(missing.length){setInfo('error','Bitte ausfüllen: '+missing.join(', ')+'.');return;}
+  if(!sc)missing.push(T('err.state'));
+  if(!mv||mv<=0)missing.push(T('err.maxV'));
+  if(!y)missing.push(T('err.year'));
+  if(missing.length){setInfo('error',T('err.missing')+missing.join(', ')+'.');return;}
   var tpl=[],tplF=[];
   for(var i=0;i<7;i++){tpl.push(document.getElementById('tpl-'+i).value);tplF.push(document.getElementById('tplF-'+i).value);}
   var sS=parseDate(document.getElementById('seasonStart').value);
   var sE=parseDate(document.getElementById('seasonEnd').value);
-  var btn=document.getElementById('generateBtn');btn.disabled=true;btn.textContent='Lade…';
+  var btn=document.getElementById('generateBtn');btn.disabled=true;btn.textContent=T('btn.calculating');
   try{
     var ph=getHolidays(y,sc);
     var sr=await fetchSchool(y,sc);
     var sm=buildSchoolMap(sr);
-    if(!sr)setInfo('warning','Hinweis: Schulferien konnten nicht geladen werden. Die Tabelle funktioniert ohne Ferien-Informationen weiter.');
+    if(!sr)setInfo('warning',T('info.noSchool'));
     var rows=[];
     for(var d=new Date(y,0,1);d<new Date(y+1,0,1);d.setDate(d.getDate()+1)){
       var iso=fmtISO(d),dt=new Date(d);
@@ -191,7 +290,7 @@ async function generate(){
     updateSaveVisibility();
     document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
   }catch(e){console.error(e);setInfo('error','Fehler: '+e.message);}
-  finally{btn.disabled=false;btn.textContent='Berechne Jahresbudget';}
+  finally{btn.disabled=false;btn.textContent=T('btn.calculate');}
 }
 
 /* render table */
@@ -205,7 +304,7 @@ function renderTable(){
       cm=row.date.getMonth();
       var mtr=document.createElement('tr');mtr.className='month-header';
       var mtd=document.createElement('td');mtd.colSpan=7;
-      mtd.innerHTML=MONTHS_DE[cm]+' '+S.year+'<span class="month-subtotal">Besucher: '+ms[cm].toLocaleString('de-DE')+' &middot; Umsatz: '+fmtEUR(mr[cm])+'</span>';
+      mtd.innerHTML=(LANG==='en'?MONTHS_EN:MONTHS_DE)[cm]+' '+S.year+'<span class="month-subtotal">'+T('ml.visitors')+': '+ms[cm].toLocaleString('de-DE')+' · '+T('ml.revenue')+': '+fmtEUR(mr[cm])+'</span>';
       mtr.appendChild(mtd);tb.appendChild(mtr);
     }
     var tr=document.createElement('tr');tr.dataset.index=idx;
@@ -217,12 +316,12 @@ function renderTable(){
     if(dow===0||dow===6)tr.classList.add('weekend');
 
     var td=document.createElement('td');td.textContent=fmtDE(row.date);tr.appendChild(td);
-    td=document.createElement('td');td.textContent=WEEKDAYS_DE[dow];tr.appendChild(td);
+    td=document.createElement('td');td.textContent=(LANG==='en'?WEEKDAYS_EN:WEEKDAYS_DE)[dow];tr.appendChild(td);
 
     td=document.createElement('td');td.className='holiday-cell';
     var parts=[];
     if(row.ph)parts.push('<span class="ph">'+row.ph+'</span>');
-    if(row.sh)parts.push('<span class="sh">Ferien: '+row.sh+'</span>');
+    if(row.sh)parts.push('<span class="sh">'+T('ferien.prefix')+row.sh+'</span>');
     td.innerHTML=parts.join('<br>');tr.appendChild(td);
 
     var tdO=document.createElement('td');
@@ -242,7 +341,7 @@ function renderTable(){
     tr.appendChild(tdR);
 
     td=document.createElement('td');
-    var ni=document.createElement('input');ni.type='text';ni.className='note-input';ni.value=row.notes;ni.placeholder='z. B. Event…';
+    var ni=document.createElement('input');ni.type='text';ni.className='note-input';ni.value=row.notes;ni.placeholder=T('note.placeholder');
     ni.addEventListener('input',function(e){row.notes=e.target.value;saveRows();});
     td.appendChild(ni);tr.appendChild(td);
     tb.appendChild(tr);
@@ -261,7 +360,7 @@ function updMH(){
   var ms=Array(12).fill(0),mr=Array(12).fill(0);
   S.rows.forEach(function(r){var v=calcV(r);ms[r.date.getMonth()]+=v;mr[r.date.getMonth()]+=calcDayRev(v).total;});
   document.querySelectorAll('#dayTable tbody tr.month-header td').forEach(function(td,i){
-    td.innerHTML=MONTHS_DE[i]+' '+S.year+'<span class="month-subtotal">Besucher: '+ms[i].toLocaleString('de-DE')+' &middot; Umsatz: '+fmtEUR(mr[i])+'</span>';
+    td.innerHTML=(LANG==='en'?MONTHS_EN:MONTHS_DE)[i]+' '+S.year+'<span class="month-subtotal">'+T('ml.visitors')+': '+ms[i].toLocaleString('de-DE')+' · '+T('ml.revenue')+': '+fmtEUR(mr[i])+'</span>';
   });
 }
 
@@ -309,16 +408,16 @@ function renderSummary(){
     var hasStaff=staffDay>0;
     var isClosed=(monthly[i]===0);
     var d=document.createElement('div');d.className='monthly-item'+(isClosed?' monthly-item-closed':'');
-    d.innerHTML='<div class="month-header"><span class="month-name">'+MONTHS_DE[i]+'</span></div>'
-      +'<div class="month-line"><span class="ml-label">Besucher</span><span class="ml-val">'+monthly[i].toLocaleString('de-DE')+'</span></div>'
+    d.innerHTML='<div class="month-header"><span class="month-name">'+(LANG==='en'?MONTHS_EN:MONTHS_DE)[i]+'</span></div>'
+      +'<div class="month-line"><span class="ml-label">'+T('ml.visitors')+'</span><span class="ml-val">'+monthly[i].toLocaleString('de-DE')+'</span></div>'
       +'<div class="month-line"><span class="ml-label">Ticketing</span><span class="ml-val">'+fmtEUR(mRev[i].ticketing)+'</span></div>'
       +'<div class="month-line"><span class="ml-label">Retail</span><span class="ml-val">'+fmtEUR(mRev[i].retail)+'</span></div>'
       +'<div class="month-line"><span class="ml-label">F&amp;B</span><span class="ml-val">'+fmtEUR(mRev[i].fb)+'</span></div>'
       +'<div class="month-line"><span class="ml-label">Machines</span><span class="ml-val">'+fmtEUR(mRev[i].machines)+'</span></div>'
-      +'<div class="month-line month-line-umsatz"><span class="ml-label">Umsatz</span><span class="ml-val">'+fmtEUR(mRev[i].total)+'</span></div>'
+      +'<div class="month-line month-line-umsatz"><span class="ml-label">'+T('ml.revenue')+'</span><span class="ml-val">'+fmtEUR(mRev[i].total)+'</span></div>'
       +(hasStaff
-        ?'<div class="month-line month-line-personal"><span class="ml-label">Personalkosten</span><span class="ml-val">−'+fmtEUR(staffMonth)+'</span></div>'
-         +'<div class="month-line month-line-ergebnis"><span class="ml-label">Ergebnis</span><span class="ml-val '+(ergebnis<0?'ml-val-neg':'')+'">'+(ergebnis<0?'−':'')+fmtEUR(Math.abs(ergebnis))+'</span></div>'
+        ?'<div class="month-line month-line-personal"><span class="ml-label">'+T('ml.staff')+'</span><span class="ml-val">−'+fmtEUR(staffMonth)+'</span></div>'
+         +'<div class="month-line month-line-ergebnis"><span class="ml-label">'+T('ml.result')+'</span><span class="ml-val '+(ergebnis<0?'ml-val-neg':'')+'">'+(ergebnis<0?'−':'')+fmtEUR(Math.abs(ergebnis))+'</span></div>'
         :'');
     mg.appendChild(d);
   }
@@ -330,14 +429,14 @@ function renderSummary(){
   var ob=document.getElementById('occBar');
   if(ob){
     var occDef=[
-      {val:'Close',label:'Geschlossen',pct:0,  color:'var(--close)'},
+      {val:'Close',label:T('occ.closed'),pct:0,  color:'var(--close)'},
       {val:'Off',  label:'Off',        pct:0,  color:'var(--off)'},
       {val:'Low',  label:'Low',        pct:25, color:'var(--low)'},
       {val:'Medium',label:'Medium',    pct:50, color:'var(--medium)'},
       {val:'High', label:'High',       pct:75, color:'var(--high)'},
       {val:'Peak', label:'Peak',       pct:100,color:'var(--peak)'}
     ];
-    ob.innerHTML='<span class="occ-bar-title">Tage nach Auslastung</span>'
+    ob.innerHTML='<span class="occ-bar-title">'+T('occ.title')+'</span>'
       +occDef.map(function(o){
         return '<div class="occ-chip">'
           +'<span class="occ-dot" style="background:'+o.color+'"></span>'
@@ -347,7 +446,7 @@ function renderSummary(){
           +'</div>';
       }).join('')
       +'<div class="occ-chip occ-chip-season">'
-      +'<span class="occ-chip-label">Saisontage</span>'
+      +'<span class="occ-chip-label">'+T('occ.seasondays')+'</span>'
       +'<span class="occ-chip-count">'+sDays+'</span>'
       +'</div>';
   }
@@ -363,11 +462,11 @@ function renderSummary(){
       syb.style.display='';
       syb.innerHTML=''
         +'<div class="summary-card staff-year-card">'
-          +'<div class="label">Jahrespersonalkosten</div>'
+          +'<div class="label">'+T('card.staffYear')+'</div>'
           +'<div class="value">'+fmtEUR(staffYear)+'</div>'
         +'</div>'
         +'<div class="summary-card staff-year-result '+(ergebnisYear<0?'staff-year-neg':'staff-year-pos')+'">'
-          +'<div class="label">Jahresergebnis</div>'
+          +'<div class="label">'+T('card.result')+'</div>'
           +'<div class="value">'+(ergebnisYear<0?'−':'')+fmtEUR(Math.abs(ergebnisYear))+'</div>'
         +'</div>';
     }else{
@@ -474,7 +573,7 @@ function renderMonthChart(monthly, mRev, mStaff) {
   }
 
   /* x-axis month labels */
-  var mShort = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+  var mShort = LANG === 'en' ? MONTHS_CHART_EN : MONTHS_CHART_DE;
   ctx.fillStyle = C.text; ctx.textAlign = 'center';
   mShort.forEach(function(m, i) {
     ctx.fillText(m, padL + i * step + step / 2, H - padB + 16);
@@ -501,9 +600,9 @@ function renderMonthChart(monthly, mRev, mStaff) {
     return x + 22 + ctx.measureText(label).width + 18;
   }
   var lx = padL;
-  lx = legItem(lx, C.bar, 0.72, 'Besucher', false);
-  lx = legItem(lx, C.line, 1, 'Umsatz', true);
-  if (hasStaff) legItem(lx, C.erg, 1, 'Ergebnis', true);
+  lx = legItem(lx, C.bar, 0.72, T('chart.visitors'), false);
+  lx = legItem(lx, C.line, 1, T('chart.revenue'), true);
+  if (hasStaff) legItem(lx, C.erg, 1, T('chart.result'), true);
 }
 
 /* reapply / reset */
@@ -916,10 +1015,10 @@ function renderStaffSummary() {
           + catRows
           + '<div class="staff-sum-divider"></div>'
         : '')
-    + sumRow('Basis Tageskosten (Netto)', basis, '')
+    + sumRow(T('staff.basis'), basis, '')
     + sumRow('SV-Zuschlag (' + STAFF_PARAMS.sv.toLocaleString('de-DE') + ' %)', sv, 'add')
     + sumRow('Puffer (' + STAFF_PARAMS.puffer.toLocaleString('de-DE') + ' %)', puff, 'add')
-    + sumRow('Tageskosten Gesamt', total, 'total')
+    + sumRow(T('staff.dayTotal'), total, 'total')
     + sumRow('Wochenkosten Gesamt (× 7)', total * 7, 'total')
     + sumRow('Monatskosten Gesamt (× 30)', total * 30, 'total')
     + '</div>';
@@ -1253,7 +1352,7 @@ function initStaffSection() {
   var staffExcelBtn = document.getElementById('staffExcelBtn');
   var staffPdfBtn   = document.getElementById('staffPdfBtn');
   if (staffExcelBtn) staffExcelBtn.addEventListener('click', function(e){withLoading(e.currentTarget,'Exportiere…',toExcelStaff);});
-  if (staffPdfBtn)   staffPdfBtn.addEventListener('click',   function(e){withLoading(e.currentTarget,'Exportiere…',toPdfStaff);});
+  if (staffPdfBtn)   staffPdfBtn.addEventListener('click',   function(e){withLoading(e.currentTarget,T('btn.exporting'),toPdfStaff);});
 
   /* Section collapse toggle */
   var toggleBtn = document.getElementById('staffToggleBtn');
@@ -1262,7 +1361,7 @@ function initStaffSection() {
     toggleBtn.addEventListener('click', function() {
       var hidden = body.style.display === 'none';
       body.style.display = hidden ? '' : 'none';
-      toggleBtn.textContent = hidden ? 'Ausblenden' : 'Einblenden';
+      toggleBtn.textContent = hidden ? T('btn.hide') : T('btn.show');
     });
   }
 
@@ -1312,12 +1411,12 @@ function init(){
     var el=document.getElementById(id);if(!el)return;
     el.addEventListener('input',function(){readRevForm();if(S.rows.length){saveGlobal();renderTable();renderSummary();}});
   });
-  document.getElementById('exportExcelBtn').addEventListener('click',function(e){withLoading(e.currentTarget,'Exportiere…',toExcel);});
-  document.getElementById('exportPdfBtn').addEventListener('click',function(e){withLoading(e.currentTarget,'Exportiere…',toPdf);});
+  document.getElementById('exportExcelBtn').addEventListener('click',function(e){withLoading(e.currentTarget,T('btn.exporting'),toExcel);});
+  document.getElementById('exportPdfBtn').addEventListener('click',function(e){withLoading(e.currentTarget,T('btn.exporting'),toPdf);});
   document.getElementById('reapplyTemplateBtn').addEventListener('click',reapply);
   document.getElementById('resetBtn').addEventListener('click',resetAll);
   document.getElementById('openProjectBtn').addEventListener('click',openProject);
-  document.getElementById('saveProjectBtn').addEventListener('click',function(e){withLoading(e.currentTarget,'Speichere…',saveProject);});
+  document.getElementById('saveProjectBtn').addEventListener('click',function(e){withLoading(e.currentTarget,T('btn.saving'),saveProject);});
   /* bulk template buttons */
   document.querySelectorAll('.template-bulk').forEach(function(bar){
     var prefix=bar.dataset.target;
@@ -1335,5 +1434,15 @@ function init(){
 
   updateSaveVisibility();
   initStaffSection();
+  /* language toggle */
+  var lt = document.getElementById('langToggle');
+  if (lt) lt.addEventListener('click', function() {
+    LANG = LANG === 'de' ? 'en' : 'de';
+    localStorage.setItem('vb:lang', LANG);
+    applyLang();
+    if (S.rows.length) { renderTable(); renderSummary(); }
+    renderStaffSummary();
+  });
+  applyLang();
 }
 document.addEventListener('DOMContentLoaded',init);

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Besucher-Budget-Rechner</title>
+  <title>Budget Planner</title>
   <link rel="stylesheet" href="styles.css" />
   <!-- Export libraries (lazy-loaded on demand with fallback CDNs in app.js) -->
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
@@ -11,47 +11,67 @@
   <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.js" defer></script>
 </head>
 <body>
+
+  <!-- ===== Top Navigation ===== -->
+  <nav class="top-nav" id="topNav">
+    <div class="nav-inner">
+      <div class="nav-brand">
+        <span class="nav-icon">&#128202;</span>
+        <span class="nav-title">Budget Planner</span>
+      </div>
+      <div class="nav-links">
+        <a href="#configSection" class="nav-link" data-i18n="nav.config">Konfiguration</a>
+        <a href="#staffSection" class="nav-link" data-i18n="nav.staff">Personalplanung</a>
+        <a href="#results" class="nav-link" data-i18n="nav.results">Ergebnisse</a>
+      </div>
+      <div class="nav-actions">
+        <button id="langToggle" class="nav-lang-btn" title="Switch language">EN</button>
+        <a href="https://leisureworkspace.com" class="nav-home-btn" data-i18n="nav.home">&#8592; Startseite</a>
+      </div>
+    </div>
+  </nav>
+
   <header>
-    <h1>Besucher-Budget-Rechner</h1>
-    <p>Planen Sie Ihre erwarteten Besucherzahlen pro Tag f&uuml;r ein komplettes Kalenderjahr</p>
+    <h1 data-i18n="page.title">Besucher-Budget-Rechner</h1>
+    <p data-i18n="page.subtitle">Planen Sie Ihre erwarteten Besucherzahlen pro Tag f&uuml;r ein komplettes Kalenderjahr</p>
   </header>
 
   <main>
     <!-- Toolbar: load / save -->
     <div class="form-toolbar">
-      <button id="openProjectBtn" type="button" class="btn-tool btn-tool-load">&#128194; Laden</button>
-      <button id="saveProjectBtn" type="button" class="btn-tool btn-tool-save hidden">&#128190; Speichern</button>
+      <button id="openProjectBtn" type="button" class="btn-tool btn-tool-load" data-i18n="btn.load">&#128194; Laden</button>
+      <button id="saveProjectBtn" type="button" class="btn-tool btn-tool-save hidden" data-i18n="btn.save">&#128190; Speichern</button>
     </div>
     <input type="file" id="openProjectFile" accept="application/json,.json,.bbr" class="hidden" />
 
-    <section class="input-form">
-      <h2>Konfiguration</h2>
+    <section class="input-form" id="configSection">
+      <h2 data-i18n="section.config">Konfiguration</h2>
 
       <!-- Row 1: Grundeinstellungen + Saison -->
       <div class="form-row">
         <div class="form-group" data-color="blue">
-          <div class="group-label">Grundeinstellungen</div>
+          <div class="group-label" data-i18n="group.basic">Grundeinstellungen</div>
           <div class="field">
-            <label for="year">Kalenderjahr</label>
+            <label for="year" data-i18n="label.year">Kalenderjahr</label>
             <select id="year"></select>
           </div>
           <div class="field field-wide">
-            <label for="state">Bundesland</label>
+            <label for="state" data-i18n="label.state">Bundesland</label>
             <select id="state"><option value="">-- bitte w&auml;hlen --</option></select>
           </div>
           <div class="field">
-            <label for="maxVisitors">Max. Besucher/Tag</label>
+            <label for="maxVisitors" data-i18n="label.maxVisitors">Max. Besucher/Tag</label>
             <input type="number" id="maxVisitors" min="0" step="1" value="1000" />
           </div>
         </div>
         <div class="form-group" data-color="amber">
-          <div class="group-label">Saison (optional)</div>
+          <div class="group-label" data-i18n="group.season">Saison (optional)</div>
           <div class="field">
-            <label for="seasonStart">Saisonbeginn</label>
+            <label for="seasonStart" data-i18n="label.seasonStart">Saisonbeginn</label>
             <input type="date" id="seasonStart" />
           </div>
           <div class="field">
-            <label for="seasonEnd">Saisonende</label>
+            <label for="seasonEnd" data-i18n="label.seasonEnd">Saisonende</label>
             <input type="date" id="seasonEnd" />
           </div>
         </div>
@@ -60,36 +80,36 @@
       <!-- Row 2: Ticketing -->
       <div class="form-row">
         <div class="form-group" data-color="teal">
-          <div class="group-label">Ticketing</div>
+          <div class="group-label" data-i18n="group.ticketing">Ticketing</div>
           <div class="field">
-            <label for="ticketAdult">Erwachsene (&euro;)</label>
+            <label for="ticketAdult" data-i18n="label.ticketAdult">Erwachsene (&euro;)</label>
             <input type="number" id="ticketAdult" step="0.01" min="0" value="0" />
           </div>
           <div class="field field-narrow">
-            <label for="vatAdult">MwSt</label>
+            <label for="vatAdult" data-i18n="label.vat">MwSt</label>
             <select id="vatAdult"><option value="19">19 %</option><option value="7">7 %</option><option value="0">0 %</option></select>
           </div>
           <div class="field-sep"></div>
           <div class="field">
-            <label for="ticketChild">Kind (&euro;)</label>
+            <label for="ticketChild" data-i18n="label.ticketChild">Kind (&euro;)</label>
             <input type="number" id="ticketChild" step="0.01" min="0" value="0" />
           </div>
           <div class="field field-narrow">
-            <label for="vatChild">MwSt</label>
+            <label for="vatChild" data-i18n="label.vat">MwSt</label>
             <select id="vatChild"><option value="19">19 %</option><option value="7">7 %</option><option value="0">0 %</option></select>
           </div>
           <div class="field-sep"></div>
           <div class="field">
-            <label for="ticketReduced">Erm&auml;&szlig;igt (&euro;)</label>
+            <label for="ticketReduced" data-i18n="label.ticketReduced">Erm&auml;&szlig;igt (&euro;)</label>
             <input type="number" id="ticketReduced" step="0.01" min="0" value="0" />
           </div>
           <div class="field field-narrow">
-            <label for="vatReduced">MwSt</label>
+            <label for="vatReduced" data-i18n="label.vat">MwSt</label>
             <select id="vatReduced"><option value="19">19 %</option><option value="7">7 %</option><option value="0">0 %</option></select>
           </div>
           <div class="field-sep"></div>
           <div class="field-avg">
-            <label>&Oslash; Netto</label>
+            <label data-i18n="label.avgNet">&Oslash; Netto</label>
             <div id="avgNetTicket" class="avg-display avg-display-teal">0,00 &euro;</div>
           </div>
         </div>
@@ -98,17 +118,17 @@
       <!-- Row 3: Umsatz pro Kopf -->
       <div class="form-row">
         <div class="form-group" data-color="green">
-          <div class="group-label">Umsatz pro Kopf</div>
+          <div class="group-label" data-i18n="group.revenue">Umsatz pro Kopf</div>
           <div class="field">
-            <label for="revenueRetail">Retail (&euro;)</label>
+            <label for="revenueRetail" data-i18n="label.retail">Retail (&euro;)</label>
             <input type="number" id="revenueRetail" step="0.01" min="0" value="0" />
           </div>
           <div class="field">
-            <label for="revenueFB">F&amp;B (&euro;)</label>
+            <label for="revenueFB" data-i18n="label.fb">F&amp;B (&euro;)</label>
             <input type="number" id="revenueFB" step="0.01" min="0" value="0" />
           </div>
           <div class="field">
-            <label for="revenueMachines">Machines (&euro;)</label>
+            <label for="revenueMachines" data-i18n="label.machines">Machines (&euro;)</label>
             <input type="number" id="revenueMachines" step="0.01" min="0" value="0" />
           </div>
         </div>
@@ -116,37 +136,37 @@
 
       <!-- Musterwoche Normalbetrieb -->
       <div class="template-week">
-        <div class="tw-title">Musterwoche &mdash; Normalbetrieb</div>
+        <div class="tw-title" data-i18n="tpl.normal">Musterwoche &mdash; Normalbetrieb</div>
         <div class="template-grid" id="templateGrid"></div>
         <div class="template-bulk" data-target="tpl">
-          <button type="button" data-bulk="Close" class="btn-secondary">Alle Close</button>
-          <button type="button" data-bulk="Off" class="btn-secondary">Alle Off</button>
-          <button type="button" data-bulk="Low" class="btn-secondary">Alle Low</button>
-          <button type="button" data-bulk="Medium" class="btn-secondary">Alle Medium</button>
-          <button type="button" data-bulk="High" class="btn-secondary">Alle High</button>
-          <button type="button" data-bulk="Peak" class="btn-secondary">Alle Peak</button>
+          <button type="button" data-bulk="Close" class="btn-secondary" data-i18n="btn.allClose">Alle Close</button>
+          <button type="button" data-bulk="Off" class="btn-secondary" data-i18n="btn.allOff">Alle Off</button>
+          <button type="button" data-bulk="Low" class="btn-secondary" data-i18n="btn.allLow">Alle Low</button>
+          <button type="button" data-bulk="Medium" class="btn-secondary" data-i18n="btn.allMedium">Alle Medium</button>
+          <button type="button" data-bulk="High" class="btn-secondary" data-i18n="btn.allHigh">Alle High</button>
+          <button type="button" data-bulk="Peak" class="btn-secondary" data-i18n="btn.allPeak">Alle Peak</button>
         </div>
       </div>
 
       <!-- Musterwoche Ferien -->
       <div class="template-week template-week-ferien">
-        <div class="tw-title tw-title-ferien">Musterwoche &mdash; Ferien</div>
+        <div class="tw-title tw-title-ferien" data-i18n="tpl.holidays">Musterwoche &mdash; Ferien</div>
         <div class="template-grid" id="templateGridFerien"></div>
         <div class="template-bulk" data-target="tplF">
-          <button type="button" data-bulk="Close" class="btn-secondary">Alle Close</button>
-          <button type="button" data-bulk="Off" class="btn-secondary">Alle Off</button>
-          <button type="button" data-bulk="Low" class="btn-secondary">Alle Low</button>
-          <button type="button" data-bulk="Medium" class="btn-secondary">Alle Medium</button>
-          <button type="button" data-bulk="High" class="btn-secondary">Alle High</button>
-          <button type="button" data-bulk="Peak" class="btn-secondary">Alle Peak</button>
+          <button type="button" data-bulk="Close" class="btn-secondary" data-i18n="btn.allClose">Alle Close</button>
+          <button type="button" data-bulk="Off" class="btn-secondary" data-i18n="btn.allOff">Alle Off</button>
+          <button type="button" data-bulk="Low" class="btn-secondary" data-i18n="btn.allLow">Alle Low</button>
+          <button type="button" data-bulk="Medium" class="btn-secondary" data-i18n="btn.allMedium">Alle Medium</button>
+          <button type="button" data-bulk="High" class="btn-secondary" data-i18n="btn.allHigh">Alle High</button>
+          <button type="button" data-bulk="Peak" class="btn-secondary" data-i18n="btn.allPeak">Alle Peak</button>
         </div>
       </div>
 
       <div class="form-actions">
         <div class="action-row">
-          <button id="reapplyTemplateBtn" type="button" class="btn-secondary hidden">Musterwoche neu anwenden</button>
-          <button id="resetBtn" type="button" class="btn-secondary hidden">Zur&uuml;cksetzen</button>
-          <button id="generateBtn" type="button">Berechne Jahresbudget</button>
+          <button id="reapplyTemplateBtn" type="button" class="btn-secondary hidden" data-i18n="btn.reapply">Musterwoche neu anwenden</button>
+          <button id="resetBtn" type="button" class="btn-secondary hidden" data-i18n="btn.reset">Zur&uuml;cksetzen</button>
+          <button id="generateBtn" type="button" data-i18n="btn.calculate">Berechne Jahresbudget</button>
         </div>
       </div>
       <div id="infoMsg" class="info-msg"></div>
@@ -155,8 +175,8 @@
     <!-- ===== Personaleinsatzplanung ===== -->
     <section class="staff-section" id="staffSection">
       <div class="staff-section-header">
-        <h2>Personaleinsatzplanung</h2>
-        <button type="button" id="staffToggleBtn" class="btn-staff-toggle">Ausblenden</button>
+        <h2 data-i18n="section.staff">Personaleinsatzplanung</h2>
+        <button type="button" id="staffToggleBtn" class="btn-staff-toggle" data-i18n="btn.hide">Ausblenden</button>
       </div>
 
       <div id="staffSectionBody">
@@ -164,14 +184,14 @@
         <div class="staff-global">
           <div class="staff-global-params">
             <div class="staff-param-block">
-              <label for="staffSV">SV-Zuschlag</label>
+              <label for="staffSV" data-i18n="label.sv">SV-Zuschlag</label>
               <div class="staff-param-input-wrap">
                 <input type="number" id="staffSV" min="0" max="100" step="0.1" value="20" />
                 <span>%</span>
               </div>
             </div>
             <div class="staff-param-block">
-              <label for="staffPuffer">Puffer</label>
+              <label for="staffPuffer" data-i18n="label.puffer">Puffer</label>
               <div class="staff-param-input-wrap">
                 <input type="number" id="staffPuffer" min="0" max="100" step="0.1" value="10" />
                 <span>%</span>
@@ -187,8 +207,8 @@
         <!-- Export + Summary -->
         <div class="staff-actions-bar">
           <div class="actions">
-            <button id="staffExcelBtn" type="button" class="btn-success">Als Excel exportieren</button>
-            <button id="staffPdfBtn"   type="button" class="btn-success">Als PDF exportieren</button>
+            <button id="staffExcelBtn" type="button" class="btn-success" data-i18n="btn.exportExcel">Als Excel exportieren</button>
+            <button id="staffPdfBtn"   type="button" class="btn-success" data-i18n="btn.exportPdf">Als PDF exportieren</button>
           </div>
         </div>
         <div class="staff-summary-section" id="staffSummarySection"></div>
@@ -202,19 +222,19 @@
       <!-- Besucher summary -->
       <div class="summary-bar">
         <div class="summary-card">
-          <div class="label">Jahresbudget (Besucher)</div>
+          <div class="label" data-i18n="card.yearTotal">Jahresbudget (Besucher)</div>
           <div id="yearTotal" class="value">0</div>
         </div>
         <div class="summary-card secondary">
-          <div class="label">&Oslash; pro Tag</div>
+          <div class="label" data-i18n="card.avgDay">&Oslash; pro Tag</div>
           <div id="avgPerDay" class="value">0</div>
         </div>
         <div class="summary-card secondary">
-          <div class="label">&Oslash; pro Monat</div>
+          <div class="label" data-i18n="card.avgMonth">&Oslash; pro Monat</div>
           <div id="avgPerMonth" class="value">0</div>
         </div>
         <div class="summary-card secondary">
-          <div class="label">Saisontage</div>
+          <div class="label" data-i18n="card.seasonDays">Saisontage</div>
           <div id="seasonDays" class="value">0</div>
         </div>
       </div>
@@ -222,23 +242,23 @@
       <!-- Einnahmen summary -->
       <div class="summary-bar summary-bar-revenue" id="revenueSummaryBar">
         <div class="summary-card revenue-card">
-          <div class="label">Jahresumsatz Gesamt</div>
+          <div class="label" data-i18n="card.revTotal">Jahresumsatz Gesamt</div>
           <div id="revYearTotal" class="value">0 &euro;</div>
         </div>
         <div class="summary-card revenue-card-cat">
-          <div class="label">Ticketing</div>
+          <div class="label" data-i18n="card.ticketing">Ticketing</div>
           <div id="revTicketing" class="value">0 &euro;</div>
         </div>
         <div class="summary-card revenue-card-cat">
-          <div class="label">Retail</div>
+          <div class="label" data-i18n="card.retail">Retail</div>
           <div id="revRetail" class="value">0 &euro;</div>
         </div>
         <div class="summary-card revenue-card-cat">
-          <div class="label">F&amp;B</div>
+          <div class="label" data-i18n="card.fb">F&amp;B</div>
           <div id="revFB" class="value">0 &euro;</div>
         </div>
         <div class="summary-card revenue-card-cat">
-          <div class="label">Machines</div>
+          <div class="label" data-i18n="card.machines">Machines</div>
           <div id="revMachines" class="value">0 &euro;</div>
         </div>
       </div>
@@ -248,17 +268,17 @@
 
       <!-- Monatsbudget -->
       <div class="card">
-        <h3>Monatsbudget</h3>
+        <h3 data-i18n="section.monthly">Monatsbudget</h3>
         <div class="monthly-grid" id="monthlyGrid"></div>
       </div>
 
       <!-- Chart -->
       <div class="card chart-card" id="chartCard">
         <div class="chart-card-header">
-          <h3>Monatliche Entwicklung</h3>
+          <h3 data-i18n="section.chart">Monatliche Entwicklung</h3>
           <label class="chart-vis-label">
             <input type="checkbox" id="chartVisible" checked />
-            Grafik anzeigen
+            <span data-i18n="label.showChart">Grafik anzeigen</span>
           </label>
         </div>
         <div id="chartWrap">
@@ -268,30 +288,30 @@
 
       <div class="actions-bar">
         <div class="actions">
-          <button id="exportExcelBtn" type="button" class="btn-success">Als Excel exportieren</button>
-          <button id="exportPdfBtn" type="button" class="btn-success">Als PDF exportieren</button>
+          <button id="exportExcelBtn" type="button" class="btn-success" data-i18n="btn.exportExcel">Als Excel exportieren</button>
+          <button id="exportPdfBtn" type="button" class="btn-success" data-i18n="btn.exportPdf">Als PDF exportieren</button>
         </div>
         <div class="legend">
-          <span class="legend-item"><span class="legend-swatch sw-weekend"></span>Wochenende</span>
-          <span class="legend-item"><span class="legend-swatch sw-holiday"></span>Feiertag</span>
-          <span class="legend-item"><span class="legend-swatch sw-school"></span>Schulferien</span>
-          <span class="legend-item"><span class="legend-swatch sw-off-season"></span>Au&szlig;erhalb Saison</span>
+          <span class="legend-item"><span class="legend-swatch sw-weekend"></span><span data-i18n="legend.weekend">Wochenende</span></span>
+          <span class="legend-item"><span class="legend-swatch sw-holiday"></span><span data-i18n="legend.holiday">Feiertag</span></span>
+          <span class="legend-item"><span class="legend-swatch sw-school"></span><span data-i18n="legend.school">Schulferien</span></span>
+          <span class="legend-item"><span class="legend-swatch sw-off-season"></span><span data-i18n="legend.offseason">Au&szlig;erhalb Saison</span></span>
         </div>
       </div>
 
       <div class="card table-card">
-        <h3>Tages&uuml;bersicht</h3>
+        <h3 data-i18n="section.daytable">Tages&uuml;bersicht</h3>
         <div class="table-wrapper">
           <table id="dayTable">
             <thead>
               <tr>
-                <th>Datum</th>
-                <th>Wochentag</th>
-                <th>Feiertag / Ferien</th>
-                <th>Auslastung</th>
-                <th>Besucher</th>
-                <th>Umsatz</th>
-                <th>Notizen</th>
+                <th data-i18n="th.date">Datum</th>
+                <th data-i18n="th.weekday">Wochentag</th>
+                <th data-i18n="th.holiday">Feiertag / Ferien</th>
+                <th data-i18n="th.occ">Auslastung</th>
+                <th data-i18n="th.visitors">Besucher</th>
+                <th data-i18n="th.revenue">Umsatz</th>
+                <th data-i18n="th.notes">Notizen</th>
               </tr>
             </thead>
             <tbody></tbody>
@@ -303,8 +323,8 @@
 
   <footer>
     <div class="footer-content">
-      <p class="footer-title">Besucher-Budget-Rechner</p>
-      <p class="footer-privacy">&#128274; Ihre Daten werden nicht auf dem Server verarbeitet oder gespeichert. Alle Berechnungen erfolgen lokal in Ihrem Browser.</p>
+      <p class="footer-title">Budget Planner &mdash; leisureworkspace.com</p>
+      <p class="footer-privacy" data-i18n="footer.privacy">&#128274; Ihre Daten werden nicht auf dem Server verarbeitet oder gespeichert. Alle Berechnungen erfolgen lokal in Ihrem Browser.</p>
       <p class="footer-links">
         <a href="https://www.stefanburian.com">www.stefanburian.com</a>
         <span class="footer-sep">&middot;</span>
