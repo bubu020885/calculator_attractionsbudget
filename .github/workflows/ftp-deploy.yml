@@ -17,7 +17,7 @@ jobs:
 
       - name: Upload via FTP
         run: |
-          for file in index.html app.js styles.css; do
+          for file in index.html app.js styles.css tutorial.html; do
             curl --ipv4 --ftp-pasv --ftp-create-dirs \
               -T "$file" \
               "ftp://${{ secrets.FTP_SERVER }}/leisureworkspace.com/budgetplanner/${file}" \

@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tutorial — Besucher-Budget-Rechner | LeisureWorkspace</title>
+  <style>
+    :root {
+      --navy: #172B3A;
+      --teal: #087E83;
+      --yellow: #FFCA19;
+      --bg: #F5F6F0;
+      --white: #ffffff;
+      --text: #1a2633;
+      --muted: #6b7a8a;
+      --border: #dde3ea;
+      --step-active: #087E83;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
+
+    /* NAV */
+    .top-nav { background: var(--navy); position: sticky; top: 0; z-index: 200; }
+    .nav-inner { max-width: 1100px; margin: 0 auto; padding: 0 20px; height: 50px; display: flex; align-items: center; gap: 0; }
+    .nav-brand { display: flex; align-items: center; gap: 8px; text-decoration: none; flex-shrink: 0; }
+    .nav-logo-svg { width: 28px; height: 28px; }
+    .nav-brand-name { font-size: 0.82rem; color: #fff; font-weight: 400; }
+    .nav-brand-name strong { font-weight: 800; }
+    .nav-brand-sub { font-size: 0.6rem; color: rgba(255,255,255,.45); }
+    .nav-divider { width: 1px; height: 22px; background: rgba(255,255,255,.2); margin: 0 14px; }
+    .nav-tool-title { font-size: 0.88rem; font-weight: 600; color: #fff; }
+    .nav-spacer { flex: 1; }
+    .nav-home-btn { background: var(--yellow); color: var(--navy); border-radius: 999px; padding: 6px 16px; font-size: 0.8rem; font-weight: 700; text-decoration: none; }
+
+    /* HERO */
+    .hero { background: var(--navy); color: #fff; padding: 60px 20px 50px; text-align: center; }
+    .hero-badge { display: inline-block; background: var(--yellow); color: var(--navy); font-size: 0.72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; padding: 4px 14px; border-radius: 999px; margin-bottom: 18px; }
+    .hero h1 { font-size: 2.1rem; font-weight: 800; margin-bottom: 12px; line-height: 1.2; }
+    .hero p { font-size: 1.05rem; color: rgba(255,255,255,.7); max-width: 560px; margin: 0 auto 28px; line-height: 1.6; }
+    .hero-cta { display: inline-block; background: var(--teal); color: #fff; padding: 14px 32px; border-radius: 999px; font-weight: 700; font-size: 1rem; text-decoration: none; transition: background .2s; }
+    .hero-cta:hover { background: #065f63; }
+
+    /* LAYOUT */
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+
+    /* OVERVIEW CHIPS */
+    .overview { padding: 48px 20px 0; }
+    .overview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; max-width: 1100px; margin: 0 auto; }
+    .overview-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 18px; cursor: pointer; transition: box-shadow .2s, transform .15s; }
+    .overview-card:hover { box-shadow: 0 4px 18px rgba(0,0,0,.1); transform: translateY(-2px); }
+    .overview-card .oc-icon { font-size: 1.8rem; margin-bottom: 10px; }
+    .overview-card .oc-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 4px; color: var(--navy); }
+    .overview-card .oc-desc { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
+
+    /* STEPS */
+    .steps-section { padding: 56px 20px; }
+    .section-label { text-align: center; font-size: 0.72rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--teal); margin-bottom: 8px; }
+    .section-title { text-align: center; font-size: 1.6rem; font-weight: 800; color: var(--navy); margin-bottom: 40px; }
+
+    .step-list { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 0; }
+    .step-item { display: grid; grid-template-columns: 56px 1fr; gap: 0 24px; position: relative; padding-bottom: 40px; }
+    .step-item:last-child { padding-bottom: 0; }
+    .step-item::before {
+      content: '';
+      position: absolute;
+      left: 27px;
+      top: 52px;
+      bottom: 0;
+      width: 2px;
+      background: var(--border);
+    }
+    .step-item:last-child::before { display: none; }
+    .step-num {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: var(--navy); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; font-weight: 800;
+      flex-shrink: 0; z-index: 1;
+    }
+    .step-num.active { background: var(--teal); box-shadow: 0 0 0 6px rgba(8,126,131,.15); }
+    .step-body { padding-top: 10px; }
+    .step-title { font-size: 1.05rem; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+    .step-desc { font-size: 0.92rem; color: var(--text); line-height: 1.6; margin-bottom: 14px; }
+    .step-tips { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+    .step-tips li { font-size: 0.85rem; color: var(--muted); padding-left: 18px; position: relative; line-height: 1.5; }
+    .step-tips li::before { content: '→'; position: absolute; left: 0; color: var(--teal); font-weight: 700; }
+
+    /* MOCKUP SCREENS */
+    .mock-screen {
+      background: var(--white); border: 1px solid var(--border); border-radius: 10px;
+      padding: 16px; margin-top: 16px; overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,.07);
+    }
+    .mock-bar { display: flex; gap: 6px; margin-bottom: 14px; }
+    .mock-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .mock-dot.red { background: #ff5f57; }
+    .mock-dot.yellow { background: #febc2e; }
+    .mock-dot.green { background: #28c840; }
+
+    /* mock: config inputs */
+    .mock-inputs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    .mock-field { background: #f8f9fa; border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; }
+    .mock-label { font-size: 0.65rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 3px; }
+    .mock-value { font-size: 0.85rem; font-weight: 600; color: var(--navy); }
+
+    /* mock: week template */
+    .mock-week { display: flex; gap: 6px; margin-top: 10px; }
+    .mock-day { flex: 1; text-align: center; border-radius: 6px; padding: 8px 4px; font-size: 0.7rem; font-weight: 700; }
+    .mock-day.off { background: #f0f1f3; color: #aaa; }
+    .mock-day.low { background: #dff0e8; color: #1a7a4a; }
+    .mock-day.med { background: #fff3cd; color: #8a6800; }
+    .mock-day.high { background: #ffe0b2; color: #9a4500; }
+    .mock-day.peak { background: #ffd0d0; color: #b83232; }
+    .mock-day .mock-day-name { font-size: 0.62rem; font-weight: 600; color: inherit; opacity: .7; margin-bottom: 2px; }
+
+    /* mock: table */
+    .mock-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+    .mock-table th { background: #f0f2f5; padding: 6px 8px; text-align: left; font-size: 0.65rem; color: var(--muted); font-weight: 700; text-transform: uppercase; }
+    .mock-table td { padding: 5px 8px; border-bottom: 1px solid #f0f1f2; }
+    .occ-badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.68rem; font-weight: 700; }
+    .occ-peak { background: #ffd0d0; color: #b83232; }
+    .occ-high { background: #ffe0b2; color: #9a4500; }
+    .occ-med  { background: #fff3cd; color: #8a6800; }
+    .occ-low  { background: #dff0e8; color: #1a7a4a; }
+    .occ-off  { background: #f0f1f3; color: #888; }
+    .occ-close{ background: #ebebeb; color: #aaa; }
+
+    /* mock: kpi cards */
+    .mock-kpi { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .mock-kpi-card { background: #f8f9fa; border: 1px solid var(--border); border-radius: 8px; padding: 12px 10px; text-align: center; }
+    .mock-kpi-val { font-size: 1.1rem; font-weight: 800; color: var(--navy); }
+    .mock-kpi-lbl { font-size: 0.65rem; color: var(--muted); margin-top: 3px; }
+
+    /* mock: chart bars */
+    .mock-chart { display: flex; align-items: flex-end; gap: 5px; height: 80px; padding: 0 4px; }
+    .mock-bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .mock-bar-seg { width: 100%; border-radius: 3px 3px 0 0; }
+    .mock-bar-lbl { font-size: 0.55rem; color: var(--muted); }
+
+    /* mock: staff table */
+    .mock-staff { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 6px; font-size: 0.75rem; }
+    .mock-staff-hd { font-weight: 700; color: var(--muted); font-size: 0.65rem; text-transform: uppercase; padding: 4px 0; border-bottom: 1px solid var(--border); }
+    .mock-staff-cell { padding: 4px 0; border-bottom: 1px solid #f5f5f5; }
+
+    /* FEATURE HIGHLIGHT */
+    .features { background: var(--white); padding: 56px 20px; }
+    .feat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; max-width: 1100px; margin: 0 auto; }
+    .feat-card { border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 20px; }
+    .feat-icon { font-size: 1.6rem; margin-bottom: 12px; }
+    .feat-title { font-size: 0.95rem; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+    .feat-body { font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
+
+    /* FOOTER */
+    .tut-footer { background: var(--navy); color: rgba(255,255,255,.5); text-align: center; padding: 32px 20px; font-size: 0.82rem; }
+    .tut-footer a { color: var(--yellow); text-decoration: none; }
+
+    /* LANG TOGGLE */
+    .lang-switch { display: flex; justify-content: center; gap: 12px; padding: 20px 0 0; }
+    .lang-btn { border: 2px solid var(--border); background: var(--white); color: var(--navy); padding: 6px 22px; border-radius: 999px; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all .15s; }
+    .lang-btn.active { border-color: var(--teal); background: var(--teal); color: #fff; }
+
+    /* Progress indicator */
+    .progress-bar-wrap { position: fixed; bottom: 24px; right: 24px; background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 18px; box-shadow: 0 4px 24px rgba(0,0,0,.12); min-width: 180px; z-index: 100; }
+    .progress-title { font-size: 0.72rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 8px; }
+    .progress-steps { display: flex; flex-direction: column; gap: 4px; }
+    .progress-step { font-size: 0.78rem; color: var(--muted); padding: 2px 0 2px 18px; position: relative; }
+    .progress-step.done { color: var(--teal); }
+    .progress-step.done::before { content: '✓'; position: absolute; left: 0; font-weight: 800; color: var(--teal); }
+    .progress-step.current { color: var(--navy); font-weight: 700; }
+    .progress-step.current::before { content: '▶'; position: absolute; left: 0; font-size: 0.6rem; color: var(--navy); top: 4px; }
+
+    @media (max-width: 640px) {
+      .hero h1 { font-size: 1.5rem; }
+      .mock-inputs { grid-template-columns: 1fr 1fr; }
+      .mock-kpi { grid-template-columns: 1fr 1fr; }
+      .progress-bar-wrap { display: none; }
+      .step-item { grid-template-columns: 40px 1fr; }
+      .step-num { width: 40px; height: 40px; font-size: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="top-nav">
+  <div class="nav-inner">
+    <a href="https://leisureworkspace.com" class="nav-brand">
+      <svg class="nav-logo-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+        <rect x="9" y="9" width="46" height="51" rx="8" fill="#172B3A"/>
+        <rect x="15" y="16" width="34" height="37" rx="3" fill="#F5F6F0"/>
+        <rect x="22" y="5" width="20" height="15" rx="5" fill="#087E83"/>
+        <rect x="27" y="9" width="10" height="3" rx="1.5" fill="#BDE3D1"/>
+        <path d="M22 29h20M22 36h14M22 43h11" stroke="#172B3A" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="42" cy="43" r="6" fill="#FFCA19"/>
+        <path d="m39.5 43 1.7 1.7 3.4-3.7" fill="none" stroke="#172B3A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div>
+        <div class="nav-brand-name"><strong>Leisure</strong>Workspace</div>
+        <div style="font-size:.6rem;color:rgba(255,255,255,.45)">Amusement Business Support</div>
+      </div>
+    </a>
+    <div class="nav-divider"></div>
+    <span class="nav-tool-title" id="navTitle">Tutorial — Budget-Rechner</span>
+    <div class="nav-spacer"></div>
+    <a href="https://leisureworkspace.com/budgetplanner" class="nav-home-btn" id="toolLink">Zum Tool ↗</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge" id="heroBadge">Schritt-für-Schritt Tutorial</div>
+  <h1 id="heroTitle">Besucher-Budget-Rechner</h1>
+  <p id="heroSub">Lernen Sie in 5 Schritten, wie Sie Ihr komplettes Jahresbudget für Ihre Freizeitanlage planen — inklusive Personalkosten, Umsatz-Prognose und Export.</p>
+  <a href="https://leisureworkspace.com/budgetplanner" class="hero-cta" id="heroCta">Jetzt Tool öffnen ↗</a>
+</section>
+
+<!-- LANG SWITCH -->
+<div class="lang-switch">
+  <button class="lang-btn active" onclick="setLang('de')" id="btnDe">DE</button>
+  <button class="lang-btn" onclick="setLang('en')" id="btnEn">EN</button>
+</div>
+
+<!-- OVERVIEW -->
+<section class="overview">
+  <div class="overview-grid">
+    <div class="overview-card" onclick="scrollToStep(1)">
+      <div class="oc-icon">⚙️</div>
+      <div class="oc-title" data-de="1. Konfiguration" data-en="1. Configuration">1. Konfiguration</div>
+      <div class="oc-desc" data-de="Bundesland, Besuchermax, Ticketpreise und Saison einstellen" data-en="Set federal state, max visitors, ticket prices and season">Bundesland, Besuchermax, Ticketpreise und Saison einstellen</div>
+    </div>
+    <div class="overview-card" onclick="scrollToStep(2)">
+      <div class="oc-icon">📅</div>
+      <div class="oc-title" data-de="2. Musterwochen" data-en="2. Template Weeks">2. Musterwochen</div>
+      <div class="oc-desc" data-de="Normal- und Ferienbetrieb nach Wochentag konfigurieren" data-en="Configure normal and holiday operation by weekday">Normal- und Ferienbetrieb nach Wochentag konfigurieren</div>
+    </div>
+    <div class="overview-card" onclick="scrollToStep(3)">
+      <div class="oc-icon">📊</div>
+      <div class="oc-title" data-de="3. Jahrestabelle" data-en="3. Annual Table">3. Jahrestabelle</div>
+      <div class="oc-desc" data-de="Berechnung starten und jeden Tag einzeln anpassen" data-en="Start calculation and adjust each day individually">Berechnung starten und jeden Tag einzeln anpassen</div>
+    </div>
+    <div class="overview-card" onclick="scrollToStep(4)">
+      <div class="oc-icon">👥</div>
+      <div class="oc-title" data-de="4. Personalplanung" data-en="4. Staff Planning">4. Personalplanung</div>
+      <div class="oc-desc" data-de="Abteilungen und Mitarbeiterbedarf für jeden Wochentag" data-en="Departments and staffing needs for each weekday">Abteilungen und Mitarbeiterbedarf für jeden Wochentag</div>
+    </div>
+    <div class="overview-card" onclick="scrollToStep(5)">
+      <div class="oc-icon">📤</div>
+      <div class="oc-title" data-de="5. Export" data-en="5. Export">5. Export</div>
+      <div class="oc-desc" data-de="Ergebnisse als Excel oder PDF exportieren" data-en="Export results as Excel or PDF">Ergebnisse als Excel oder PDF exportieren</div>
+    </div>
+  </div>
+</section>
+
+<!-- STEPS -->
+<section class="steps-section">
+  <div class="container">
+    <div class="section-label" data-de="Anleitung" data-en="Guide">Anleitung</div>
+    <h2 class="section-title" data-de="So funktioniert das Tool" data-en="How the tool works">So funktioniert das Tool</h2>
+
+    <div class="step-list">
+
+      <!-- STEP 1 -->
+      <div class="step-item" id="step1">
+        <div class="step-num active">1</div>
+        <div class="step-body">
+          <div class="step-title" data-de="Konfiguration — Grundeinstellungen" data-en="Configuration — Basic Settings">Konfiguration — Grundeinstellungen</div>
+          <div class="step-desc" data-de="Stellen Sie zuerst die Grundparameter ein. Diese bestimmen den Berechnungsrahmen für das gesamte Jahr." data-en="First set the basic parameters. These determine the calculation framework for the entire year.">Stellen Sie zuerst die Grundparameter ein. Diese bestimmen den Berechnungsrahmen für das gesamte Jahr.</div>
+          <ul class="step-tips">
+            <li data-de="Bundesland wählen → Schulferien werden automatisch geladen (API)" data-en="Select federal state → school holidays are loaded automatically (API)">Bundesland wählen → Schulferien werden automatisch geladen (API)</li>
+            <li data-de="Max. Besucher/Tag = Kapazitätsgrenze Ihrer Anlage (z.B. 2000)" data-en="Max. Visitors/Day = capacity limit of your facility (e.g. 2000)">Max. Besucher/Tag = Kapazitätsgrenze Ihrer Anlage (z.B. 2000)</li>
+            <li data-de="Ticketpreise + MwSt eingeben → Netto-Durchschnitt wird berechnet" data-en="Enter ticket prices + VAT → net average is calculated">Ticketpreise + MwSt eingeben → Netto-Durchschnitt wird berechnet</li>
+            <li data-de="Optional: Saisonbeginn und -ende für Außerhalb-Saison-Markierung" data-en="Optional: Season start and end for off-season marking">Optional: Saisonbeginn und -ende für Außerhalb-Saison-Markierung</li>
+            <li data-de="Zusätzliche Umsatzkanäle: Retail, F&B, Maschinen pro Kopf angeben" data-en="Additional revenue channels: Retail, F&B, Machines per head">Zusätzliche Umsatzkanäle: Retail, F&B, Maschinen pro Kopf angeben</li>
+          </ul>
+
+          <div class="mock-screen">
+            <div class="mock-bar"><div class="mock-dot red"></div><div class="mock-dot yellow"></div><div class="mock-dot green"></div></div>
+            <div class="mock-inputs">
+              <div class="mock-field">
+                <div class="mock-label" data-de="Kalenderjahr" data-en="Calendar Year">Kalenderjahr</div>
+                <div class="mock-value">2025</div>
+              </div>
+              <div class="mock-field">
+                <div class="mock-label" data-de="Bundesland" data-en="Federal State">Bundesland</div>
+                <div class="mock-value" data-de="Bayern" data-en="Bavaria">Bayern</div>
+              </div>
+              <div class="mock-field">
+                <div class="mock-label" data-de="Max. Besucher/Tag" data-en="Max. Visitors/Day">Max. Besucher/Tag</div>
+                <div class="mock-value">2 000</div>
+              </div>
+              <div class="mock-field">
+                <div class="mock-label" data-de="Erwachsene (€)" data-en="Adults (€)">Erwachsene (€)</div>
+                <div class="mock-value">18,00 €</div>
+              </div>
+              <div class="mock-field">
+                <div class="mock-label" data-de="Kind (€)" data-en="Child (€)">Kind (€)</div>
+                <div class="mock-value">12,00 €</div>
+              </div>
+              <div class="mock-field">
+                <div class="mock-label" data-de="MwSt" data-en="VAT">MwSt</div>
+                <div class="mock-value">19 %</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="step-item" id="step2">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title" data-de="Musterwochen — Auslastung nach Wochentag" data-en="Template Weeks — Utilization by Weekday">Musterwochen — Auslastung nach Wochentag</div>
+          <div class="step-desc" data-de="Definieren Sie zwei Musterwochen: eine für Normalbetrieb, eine für Schulferienzeiten. Das Tool wendet diese automatisch auf alle Wochen des Jahres an." data-en="Define two template weeks: one for normal operation, one for school holiday periods. The tool automatically applies these to all weeks of the year.">Definieren Sie zwei Musterwochen: eine für Normalbetrieb, eine für Schulferienzeiten. Das Tool wendet diese automatisch auf alle Wochen des Jahres an.</div>
+          <ul class="step-tips">
+            <li data-de="6 Stufen: Close → Off → Low (25%) → Medium (50%) → High (75%) → Peak (100%)" data-en="6 levels: Close → Off → Low (25%) → Medium (50%) → High (75%) → Peak (100%)">6 Stufen: Close → Off → Low (25%) → Medium (50%) → High (75%) → Peak (100%)</li>
+            <li data-de="Schnellauswahl: «Alle Low», «Alle Peak» usw. für ganzen Block" data-en="Quick select: 'All Low', 'All Peak' etc. for entire block">Schnellauswahl: «Alle Low», «Alle Peak» usw. für ganzen Block</li>
+            <li data-de="Ferienwoche meist höher als Normalwoche einstellen (mehr Besucher)" data-en="Holiday week usually set higher than normal week (more visitors)">Ferienwoche meist höher als Normalwoche einstellen (mehr Besucher)</li>
+            <li data-de="Nach dem Berechnen können einzelne Tage in der Tabelle manuell überschrieben werden" data-en="After calculating, individual days in the table can be manually overridden">Nach dem Berechnen können einzelne Tage in der Tabelle manuell überschrieben werden</li>
+          </ul>
+
+          <div class="mock-screen">
+            <div class="mock-bar"><div class="mock-dot red"></div><div class="mock-dot yellow"></div><div class="mock-dot green"></div></div>
+            <div style="font-size:.72rem;font-weight:700;color:var(--muted);margin-bottom:8px" data-de="Musterwoche — Normalbetrieb" data-en="Template Week — Normal Operations">Musterwoche — Normalbetrieb</div>
+            <div class="mock-week">
+              <div class="mock-day off"><div class="mock-day-name">Mo</div>Off</div>
+              <div class="mock-day low"><div class="mock-day-name">Di</div>Low</div>
+              <div class="mock-day med"><div class="mock-day-name">Mi</div>Med</div>
+              <div class="mock-day med"><div class="mock-day-name">Do</div>Med</div>
+              <div class="mock-day high"><div class="mock-day-name">Fr</div>High</div>
+              <div class="mock-day peak"><div class="mock-day-name">Sa</div>Peak</div>
+              <div class="mock-day high"><div class="mock-day-name">So</div>High</div>
+            </div>
+            <div style="font-size:.72rem;font-weight:700;color:var(--muted);margin:14px 0 8px" data-de="Musterwoche — Schulferien" data-en="Template Week — School Holidays">Musterwoche — Schulferien</div>
+            <div class="mock-week">
+              <div class="mock-day med"><div class="mock-day-name">Mo</div>Med</div>
+              <div class="mock-day high"><div class="mock-day-name">Di</div>High</div>
+              <div class="mock-day high"><div class="mock-day-name">Mi</div>High</div>
+              <div class="mock-day high"><div class="mock-day-name">Do</div>High</div>
+              <div class="mock-day peak"><div class="mock-day-name">Fr</div>Peak</div>
+              <div class="mock-day peak"><div class="mock-day-name">Sa</div>Peak</div>
+              <div class="mock-day peak"><div class="mock-day-name">So</div>Peak</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="step-item" id="step3">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title" data-de="Jahresbudget berechnen & Tabelle anpassen" data-en="Calculate Annual Budget & Adjust Table">Jahresbudget berechnen &amp; Tabelle anpassen</div>
+          <div class="step-desc" data-de="Klicken Sie auf «Berechne Jahresbudget». Das Tool erstellt eine vollständige Tagesübersicht mit automatischer Feiertags- und Ferienzuweisung für alle 365 Tage." data-en="Click 'Calculate Annual Budget'. The tool creates a complete daily overview with automatic public holiday and school holiday assignment for all 365 days.">Klicken Sie auf «Berechne Jahresbudget». Das Tool erstellt eine vollständige Tagesübersicht mit automatischer Feiertags- und Ferienzuweisung für alle 365 Tage.</div>
+          <ul class="step-tips">
+            <li data-de="Farbkodierung: Grün = Schulferien, Orange = Feiertag, Grau = Wochenende" data-en="Color coding: Green = school holidays, Orange = public holiday, Grey = weekend">Farbkodierung: Grün = Schulferien, Orange = Feiertag, Grau = Wochenende</li>
+            <li data-de="Auslastung per Dropdown für jeden einzelnen Tag änderbar (Feinsteuering)" data-en="Utilization changeable per dropdown for each individual day (fine-tuning)">Auslastung per Dropdown für jeden einzelnen Tag änderbar (Feinsteuering)</li>
+            <li data-de="Notiz-Feld pro Tag für Events, Sonderaktionen etc." data-en="Note field per day for events, special actions etc.">Notiz-Feld pro Tag für Events, Sonderaktionen etc.</li>
+            <li data-de="KPI-Karten oben zeigen: Jahresbesucher, Ø/Tag, Jahresumsatz, Ergebnis" data-en="KPI cards on top show: Annual visitors, avg/day, annual revenue, result">KPI-Karten oben zeigen: Jahresbesucher, Ø/Tag, Jahresumsatz, Ergebnis</li>
+            <li data-de="Monatsbalkendiagramm mit 3 Linien: Besucher / Umsatz / Ergebnis" data-en="Monthly bar chart with 3 lines: Visitors / Revenue / Result">Monatsbalkendiagramm mit 3 Linien: Besucher / Umsatz / Ergebnis</li>
+          </ul>
+
+          <div class="mock-screen">
+            <div class="mock-bar"><div class="mock-dot red"></div><div class="mock-dot yellow"></div><div class="mock-dot green"></div></div>
+            <div class="mock-kpi" style="margin-bottom:16px">
+              <div class="mock-kpi-card">
+                <div class="mock-kpi-val">285.400</div>
+                <div class="mock-kpi-lbl" data-de="Jahresbesucher" data-en="Annual Visitors">Jahresbesucher</div>
+              </div>
+              <div class="mock-kpi-card">
+                <div class="mock-kpi-val">782</div>
+                <div class="mock-kpi-lbl" data-de="Ø pro Tag" data-en="Avg per Day">Ø pro Tag</div>
+              </div>
+              <div class="mock-kpi-card">
+                <div class="mock-kpi-val">3,8 Mio €</div>
+                <div class="mock-kpi-lbl" data-de="Jahresumsatz" data-en="Annual Revenue">Jahresumsatz</div>
+              </div>
+              <div class="mock-kpi-card" style="background:#e8f8f0;border-color:#b2e0cc">
+                <div class="mock-kpi-val" style="color:#1a7a4a">+1,2 Mio €</div>
+                <div class="mock-kpi-lbl" data-de="Jahresergebnis" data-en="Annual Result">Jahresergebnis</div>
+              </div>
+            </div>
+            <table class="mock-table">
+              <thead><tr>
+                <th data-de="Datum" data-en="Date">Datum</th>
+                <th data-de="Wochentag" data-en="Weekday">Wochentag</th>
+                <th data-de="Ferien/Feiertag" data-en="Holiday">Ferien/Feiertag</th>
+                <th data-de="Auslastung" data-en="Utilization">Auslastung</th>
+                <th data-de="Besucher" data-en="Visitors">Besucher</th>
+              </tr></thead>
+              <tbody>
+                <tr><td>01.07.2025</td><td data-de="Dienstag" data-en="Tuesday">Dienstag</td><td style="color:#1a7a4a;font-size:.7rem" data-de="Sommerferien BY" data-en="Summer Holidays BY">Sommerferien BY</td><td><span class="occ-badge occ-high">High</span></td><td>1.500</td></tr>
+                <tr><td>02.07.2025</td><td data-de="Mittwoch" data-en="Wednesday">Mittwoch</td><td style="color:#1a7a4a;font-size:.7rem" data-de="Sommerferien BY" data-en="Summer Holidays BY">Sommerferien BY</td><td><span class="occ-badge occ-high">High</span></td><td>1.500</td></tr>
+                <tr style="background:#fff8e1"><td>03.07.2025</td><td data-de="Donnerstag" data-en="Thursday">Donnerstag</td><td style="color:#8a5a00;font-size:.7rem">Fronleichnam</td><td><span class="occ-badge occ-peak">Peak</span></td><td>2.000</td></tr>
+                <tr><td>04.07.2025</td><td data-de="Freitag" data-en="Friday">Freitag</td><td>—</td><td><span class="occ-badge occ-peak">Peak</span></td><td>2.000</td></tr>
+                <tr style="background:#f5f5f5"><td>05.07.2025</td><td data-de="Samstag" data-en="Saturday">Samstag</td><td>—</td><td><span class="occ-badge occ-peak">Peak</span></td><td>2.000</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 4 -->
+      <div class="step-item" id="step4">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-title" data-de="Personalplanung — Abteilungen & Kosten" data-en="Staff Planning — Departments & Costs">Personalplanung — Abteilungen &amp; Kosten</div>
+          <div class="step-desc" data-de="Im Bereich «Personaleinsatzplanung» legen Sie Ihre Abteilungen an und definieren, wie viele Mitarbeiter an welchem Wochentag benötigt werden. Das Tool berechnet daraus Tages-, Wochen- und Monatskosten." data-en="In the 'Staff Scheduling' section, set up your departments and define how many employees are needed on which weekday. The tool calculates daily, weekly and monthly costs.">Im Bereich «Personaleinsatzplanung» legen Sie Ihre Abteilungen an und definieren, wie viele Mitarbeiter an welchem Wochentag benötigt werden. Das Tool berechnet daraus Tages-, Wochen- und Monatskosten.</div>
+          <ul class="step-tips">
+            <li data-de="Abteilungen hinzufügen: z.B. Kasse, Service, Technik, Reinigung" data-en="Add departments: e.g. Cash desk, Service, Technical, Cleaning">Abteilungen hinzufügen: z.B. Kasse, Service, Technik, Reinigung</li>
+            <li data-de="Pro Abteilung: Tageslohn (Netto) + Anzahl MA pro Wochentag" data-en="Per department: daily wage (net) + number of employees per weekday">Pro Abteilung: Tageslohn (Netto) + Anzahl MA pro Wochentag</li>
+            <li data-de="SV-Zuschlag (%) und Puffer (%) werden auf Brutto aufgeschlagen" data-en="Social security surcharge (%) and buffer (%) are added to gross">SV-Zuschlag (%) und Puffer (%) werden auf Brutto aufgeschlagen</li>
+            <li data-de="Ergebnis: Jahresergebnis = Jahresumsatz − Jahrespersonalkosten" data-en="Result: Annual result = Annual revenue − Annual personnel costs">Ergebnis: Jahresergebnis = Jahresumsatz − Jahrespersonalkosten</li>
+          </ul>
+
+          <div class="mock-screen">
+            <div class="mock-bar"><div class="mock-dot red"></div><div class="mock-dot yellow"></div><div class="mock-dot green"></div></div>
+            <div style="font-size:.72rem;font-weight:700;color:var(--muted);margin-bottom:10px" data-de="SV-Zuschlag: 20%  |  Puffer: 10%" data-en="Social Security: 20%  |  Buffer: 10%">SV-Zuschlag: 20%  |  Puffer: 10%</div>
+            <div class="mock-staff">
+              <div class="mock-staff-hd" data-de="Abteilung" data-en="Department">Abteilung</div>
+              <div class="mock-staff-hd">Mo</div><div class="mock-staff-hd">Di–Do</div><div class="mock-staff-hd">Fr–Sa</div><div class="mock-staff-hd">So</div>
+
+              <div class="mock-staff-cell" data-de="Kasse / Einlass" data-en="Cash Desk">Kasse / Einlass</div>
+              <div class="mock-staff-cell">0 MA</div><div class="mock-staff-cell">3 MA</div><div class="mock-staff-cell">5 MA</div><div class="mock-staff-cell">4 MA</div>
+
+              <div class="mock-staff-cell">Service</div>
+              <div class="mock-staff-cell">0 MA</div><div class="mock-staff-cell">4 MA</div><div class="mock-staff-cell">8 MA</div><div class="mock-staff-cell">6 MA</div>
+
+              <div class="mock-staff-cell" data-de="Technik" data-en="Technical">Technik</div>
+              <div class="mock-staff-cell">0 MA</div><div class="mock-staff-cell">2 MA</div><div class="mock-staff-cell">2 MA</div><div class="mock-staff-cell">2 MA</div>
+            </div>
+            <div style="margin-top:14px;background:#f0faf5;border:1px solid #b2e0cc;border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between">
+              <div>
+                <div style="font-size:.65rem;color:var(--muted)" data-de="Jahrespersonalkosten" data-en="Annual Personnel Costs">Jahrespersonalkosten</div>
+                <div style="font-size:1.05rem;font-weight:800;color:#172B3A">2.590.000 €</div>
+              </div>
+              <div>
+                <div style="font-size:.65rem;color:var(--muted)" data-de="Jahresergebnis" data-en="Annual Result">Jahresergebnis</div>
+                <div style="font-size:1.05rem;font-weight:800;color:#1a7a4a">+1.210.000 €</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 5 -->
+      <div class="step-item" id="step5">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <div class="step-title" data-de="Speichern & Exportieren" data-en="Save & Export">Speichern &amp; Exportieren</div>
+          <div class="step-desc" data-de="Sichern Sie Ihre Planung und exportieren Sie die Ergebnisse für Präsentationen oder Jahresberichte." data-en="Save your planning and export the results for presentations or annual reports.">Sichern Sie Ihre Planung und exportieren Sie die Ergebnisse für Präsentationen oder Jahresberichte.</div>
+          <ul class="step-tips">
+            <li data-de="💾 Speichern: Konfiguration als JSON-Datei lokal sichern (Browser-Download)" data-en="💾 Save: Save configuration as JSON file locally (browser download)">💾 Speichern: Konfiguration als JSON-Datei lokal sichern (Browser-Download)</li>
+            <li data-de="📂 Laden: Gespeicherte JSON-Datei wieder einlesen — alle Einstellungen wiederhergestellt" data-en="📂 Load: Read saved JSON file again — all settings restored">📂 Laden: Gespeicherte JSON-Datei wieder einlesen — alle Einstellungen wiederhergestellt</li>
+            <li data-de="📊 Excel-Export: Vollständige Jahrestabelle als .xlsx mit Monatsübersicht" data-en="📊 Excel Export: Complete annual table as .xlsx with monthly overview">📊 Excel-Export: Vollständige Jahrestabelle als .xlsx mit Monatsübersicht</li>
+            <li data-de="📄 PDF-Export: Formatierter Bericht mit KPI-Zusammenfassung und Monatstabelle" data-en="📄 PDF Export: Formatted report with KPI summary and monthly table">📄 PDF-Export: Formatierter Bericht mit KPI-Zusammenfassung und Monatstabelle</li>
+            <li data-de="🔒 Datenschutz: Alle Berechnungen laufen lokal im Browser — keine Serverdaten" data-en="🔒 Privacy: All calculations run locally in the browser — no server data">🔒 Datenschutz: Alle Berechnungen laufen lokal im Browser — keine Serverdaten</li>
+          </ul>
+
+          <div class="mock-screen">
+            <div class="mock-bar"><div class="mock-dot red"></div><div class="mock-dot yellow"></div><div class="mock-dot green"></div></div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <div style="flex:1;min-width:130px;background:#e8f5ff;border:1px solid #b0d8f5;border-radius:8px;padding:12px;text-align:center">
+                <div style="font-size:1.4rem;margin-bottom:4px">📊</div>
+                <div style="font-size:.78rem;font-weight:700;color:#172B3A" data-de="Excel exportieren" data-en="Export Excel">Excel exportieren</div>
+                <div style="font-size:.65rem;color:#6b7a8a;margin-top:3px">.xlsx</div>
+              </div>
+              <div style="flex:1;min-width:130px;background:#fff3e0;border:1px solid #f5c97a;border-radius:8px;padding:12px;text-align:center">
+                <div style="font-size:1.4rem;margin-bottom:4px">📄</div>
+                <div style="font-size:.78rem;font-weight:700;color:#172B3A" data-de="PDF exportieren" data-en="Export PDF">PDF exportieren</div>
+                <div style="font-size:.65rem;color:#6b7a8a;margin-top:3px">.pdf</div>
+              </div>
+              <div style="flex:1;min-width:130px;background:#f0faf5;border:1px solid #b2e0cc;border-radius:8px;padding:12px;text-align:center">
+                <div style="font-size:1.4rem;margin-bottom:4px">💾</div>
+                <div style="font-size:.78rem;font-weight:700;color:#172B3A" data-de="Speichern (JSON)" data-en="Save (JSON)">Speichern (JSON)</div>
+                <div style="font-size:.65rem;color:#6b7a8a;margin-top:3px">.json</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /step-list -->
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features">
+  <div class="container">
+    <div class="section-label" data-de="Highlights" data-en="Highlights">Highlights</div>
+    <h2 class="section-title" data-de="Weitere Funktionen" data-en="Additional Features">Weitere Funktionen</h2>
+    <div class="feat-grid">
+      <div class="feat-card">
+        <div class="feat-icon">🌍</div>
+        <div class="feat-title" data-de="Zweisprachig DE / EN" data-en="Bilingual DE / EN">Zweisprachig DE / EN</div>
+        <div class="feat-body" data-de="Automatische Spracherkennung über den Browser. Umschalten jederzeit oben rechts mit DE / EN." data-en="Automatic language detection via browser. Switch at any time in the top right with DE / EN.">Automatische Spracherkennung über den Browser. Umschalten jederzeit oben rechts mit DE / EN.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">📅</div>
+        <div class="feat-title" data-de="Automatische Ferien-API" data-en="Automatic Holidays API">Automatische Ferien-API</div>
+        <div class="feat-body" data-de="Schulferien aller 16 Bundesländer werden automatisch via OpenHolidays API geladen. Feiertage inklusive." data-en="School holidays for all 16 federal states are loaded automatically via OpenHolidays API. Public holidays included.">Schulferien aller 16 Bundesländer werden automatisch via OpenHolidays API geladen. Feiertage inklusive.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">📈</div>
+        <div class="feat-title" data-de="Interaktives Monatsdiagramm" data-en="Interactive Monthly Chart">Interaktives Monatsdiagramm</div>
+        <div class="feat-body" data-de="Balken- und Liniendiagramm zeigt Besucher, Umsatz und Ergebnis auf Monatsbasis — ein- und ausblendbar." data-en="Bar and line chart shows visitors, revenue and result on a monthly basis — can be shown/hidden.">Balken- und Liniendiagramm zeigt Besucher, Umsatz und Ergebnis auf Monatsbasis — ein- und ausblendbar.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🔒</div>
+        <div class="feat-title" data-de="100% Datenschutz" data-en="100% Privacy">100% Datenschutz</div>
+        <div class="feat-body" data-de="Keine Daten verlassen Ihren Browser. Die gesamte Berechnung läuft clientseitig in JavaScript. Keine Anmeldung erforderlich." data-en="No data leaves your browser. All calculation runs client-side in JavaScript. No login required.">Keine Daten verlassen Ihren Browser. Die gesamte Berechnung läuft clientseitig in JavaScript. Keine Anmeldung erforderlich.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">⚡</div>
+        <div class="feat-title" data-de="Schnell-Templates" data-en="Quick Templates">Schnell-Templates</div>
+        <div class="feat-body" data-de="Mit einem Klick alle Tage auf Close, Off, Low, Medium, High oder Peak setzen — dann nur die Ausnahmen anpassen." data-en="With one click set all days to Close, Off, Low, Medium, High or Peak — then only adjust the exceptions.">Mit einem Klick alle Tage auf Close, Off, Low, Medium, High oder Peak setzen — dann nur die Ausnahmen anpassen.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">💼</div>
+        <div class="feat-title" data-de="Multi-Kanal-Umsatz" data-en="Multi-Channel Revenue">Multi-Kanal-Umsatz</div>
+        <div class="feat-body" data-de="Ticketing, Retail, F&B und Maschinen werden getrennt erfasst und in der Gesamtkalkulation ausgewiesen." data-en="Ticketing, Retail, F&B and Machines are recorded separately and shown in the overall calculation.">Ticketing, Retail, F&amp;B und Maschinen werden getrennt erfasst und in der Gesamtkalkulation ausgewiesen.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section style="background:var(--teal);padding:56px 20px;text-align:center">
+  <h2 style="font-size:1.7rem;font-weight:800;color:#fff;margin-bottom:12px" id="ctaTitle" data-de="Bereit zum Planen?" data-en="Ready to plan?">Bereit zum Planen?</h2>
+  <p style="color:rgba(255,255,255,.8);font-size:1rem;margin-bottom:28px;max-width:480px;margin-left:auto;margin-right:auto" id="ctaSub" data-de="Öffnen Sie den Besucher-Budget-Rechner direkt im Browser — kostenlos, ohne Anmeldung." data-en="Open the Visitor Budget Calculator directly in your browser — free, no login required.">Öffnen Sie den Besucher-Budget-Rechner direkt im Browser — kostenlos, ohne Anmeldung.</p>
+  <a href="https://leisureworkspace.com/budgetplanner" style="display:inline-block;background:var(--yellow);color:var(--navy);padding:16px 40px;border-radius:999px;font-weight:800;font-size:1.05rem;text-decoration:none" id="ctaBtn" data-de="Zum Tool ↗" data-en="Open Tool ↗">Zum Tool ↗</a>
+</section>
+
+<!-- FOOTER -->
+<footer class="tut-footer">
+  <p>&copy; 2025 <a href="https://leisureworkspace.com">LeisureWorkspace</a> — Amusement Business Support</p>
+</footer>
+
+<!-- PROGRESS WIDGET -->
+<div class="progress-bar-wrap" id="progressWidget">
+  <div class="progress-title" id="progressLabel">Tutorial</div>
+  <div class="progress-steps" id="progressSteps"></div>
+</div>
+
+<script>
+var LANG = 'de';
+
+var stepTitles = {
+  de: ['Konfiguration','Musterwochen','Jahrestabelle','Personalplanung','Export'],
+  en: ['Configuration','Template Weeks','Annual Table','Staff Planning','Export']
+};
+
+function setLang(l) {
+  LANG = l;
+  document.getElementById('btnDe').classList.toggle('active', l === 'de');
+  document.getElementById('btnEn').classList.toggle('active', l === 'en');
+  document.querySelectorAll('[data-de]').forEach(function(el) {
+    el.textContent = el.getAttribute('data-' + l);
+  });
+  document.getElementById('navTitle').textContent = l === 'de' ? 'Tutorial — Budget-Rechner' : 'Tutorial — Budget Calculator';
+  document.getElementById('toolLink').textContent = l === 'de' ? 'Zum Tool ↗' : 'Open Tool ↗';
+  document.getElementById('heroBadge').textContent = l === 'de' ? 'Schritt-für-Schritt Tutorial' : 'Step-by-Step Tutorial';
+  document.getElementById('heroTitle').textContent = l === 'de' ? 'Besucher-Budget-Rechner' : 'Visitor Budget Calculator';
+  document.getElementById('heroSub').textContent = l === 'de'
+    ? 'Lernen Sie in 5 Schritten, wie Sie Ihr komplettes Jahresbudget für Ihre Freizeitanlage planen — inklusive Personalkosten, Umsatz-Prognose und Export.'
+    : 'Learn in 5 steps how to plan your complete annual budget for your leisure facility — including staff costs, revenue forecast and export.';
+  document.getElementById('heroCta').textContent = l === 'de' ? 'Jetzt Tool öffnen ↗' : 'Open Tool Now ↗';
+  document.getElementById('progressLabel').textContent = l === 'de' ? 'Tutorial' : 'Tutorial';
+  buildProgress();
+}
+
+function scrollToStep(n) {
+  var el = document.getElementById('step' + n);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function buildProgress() {
+  var titles = stepTitles[LANG];
+  var container = document.getElementById('progressSteps');
+  container.innerHTML = '';
+  titles.forEach(function(t, i) {
+    var div = document.createElement('div');
+    div.className = 'progress-step';
+    div.id = 'ps' + (i+1);
+    div.textContent = (i+1) + '. ' + t;
+    div.style.cursor = 'pointer';
+    div.onclick = (function(n){ return function(){ scrollToStep(n); }; })(i+1);
+    container.appendChild(div);
+  });
+}
+
+function updateProgress() {
+  var scrollY = window.scrollY + 120;
+  var current = 1;
+  for (var i = 1; i <= 5; i++) {
+    var el = document.getElementById('step' + i);
+    if (el && el.getBoundingClientRect().top + window.scrollY <= scrollY) current = i;
+  }
+  for (var j = 1; j <= 5; j++) {
+    var ps = document.getElementById('ps' + j);
+    if (!ps) continue;
+    ps.className = 'progress-step' + (j < current ? ' done' : (j === current ? ' current' : ''));
+  }
+  // Update step numbers active state
+  document.querySelectorAll('.step-num').forEach(function(el, idx) {
+    el.classList.toggle('active', idx + 1 === current);
+  });
+}
+
+window.addEventListener('scroll', updateProgress);
+buildProgress();
+updateProgress();
+
+// Auto-detect lang
+var nav = navigator.language || navigator.userLanguage || '';
+if (!nav.toLowerCase().startsWith('de')) setLang('en');
+</script>
+</body>
+</html>
